@@ -183,7 +183,7 @@ export function UnifiedDownloader({
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-background">
+        <div className="flex-1 flex flex-col bg-background">
             <div
                 className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm"
                 style={{ paddingTop: 'env(safe-area-inset-top)' }}
