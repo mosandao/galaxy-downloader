@@ -61,7 +61,7 @@ export function FeedbackDialog({
     // 验证状态
     const contentError = content ? validateContent(content) : null
     const emailError = email ? !validateEmail(email) : null
-    const canSubmit = !contentError && !emailError && content.trim().length >= FEEDBACK_CONFIG.validation.contentMinLength && validateEmail(email)
+    const canSubmit = !contentError && !emailError && content.trim().length >= FEEDBACK_CONFIG.validation.contentMinLength && email.trim().length > 0 && validateEmail(email)
     const contentTooShortMessage = feedback.contentTooShort.replace('{min}', String(FEEDBACK_CONFIG.validation.contentMinLength))
     const contentCounterText = feedback.contentCounter
         .replace('{current}', String(contentLength))
