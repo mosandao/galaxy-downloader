@@ -95,34 +95,38 @@ export function ResultCard({ result, onClose, dict }: ResultCardProps) {
  */
 function SinglePartButtons({ result, dict }: { result: NonNullable<UnifiedParseResult['data']>; dict: HomeDictionary }) {
     const showExtractAudio = result.platform === 'douyin' || result.platform === 'xiaohongshu' || result.platform === 'tiktok';
+    const videoDownloadUrl = result.downloadVideoUrl || result.originDownloadVideoUrl;
+    const audioDownloadUrl = result.downloadAudioUrl || result.originDownloadAudioUrl || null;
 
     return (
         <>
             <div className="grid grid-cols-2 gap-2">
-                <Button
-                    variant="outline"
-                    className="flex items-center justify-center gap-2"
-                    onClick={() => {
-                        downloadFile(result.downloadVideoUrl!)
-                    }}
-                >
-                    {dict.result.downloadVideo}
-                </Button>
-                {result.downloadAudioUrl && (
+                {videoDownloadUrl && (
                     <Button
                         variant="outline"
                         className="flex items-center justify-center gap-2"
                         onClick={() => {
-                            downloadFile(result.downloadAudioUrl!)
+                            downloadFile(videoDownloadUrl)
+                        }}
+                    >
+                        {dict.result.downloadVideo}
+                    </Button>
+                )}
+                {audioDownloadUrl && (
+                    <Button
+                        variant="outline"
+                        className="flex items-center justify-center gap-2"
+                        onClick={() => {
+                            downloadFile(audioDownloadUrl)
                         }}
                     >
                         {dict.result.downloadAudio}
                     </Button>
                 )}
 
-                {showExtractAudio && result.downloadVideoUrl && (
+                {showExtractAudio && videoDownloadUrl && (
                     <ExtractAudioButton
-                        videoUrl={result.downloadVideoUrl}
+                        videoUrl={videoDownloadUrl}
                         title={result.title}
                         dict={dict}
                     />

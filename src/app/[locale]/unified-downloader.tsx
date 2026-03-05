@@ -110,6 +110,8 @@ export function UnifiedDownloader({
             case 'bili':
             case 'bilibili':
                 return dict.history.platforms.bilibili;
+            case 'bilibili_tv':
+                return dict.history.platforms.bilibiliTv;
             case 'douyin':
                 return dict.history.platforms.douyin;
             case 'xiaohongshu':
@@ -203,6 +205,7 @@ export function UnifiedDownloader({
                         {dict.unified.pageTitle}
                     </Link>
                     <div className="flex items-center gap-1">
+                        <DeferredFeedbackDialog locale={locale} dict={dict} />
                         <DeferredLanguageSwitcher currentLocale={locale} dict={dict} compact />
                         <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                             <DialogTrigger asChild>
@@ -227,11 +230,6 @@ export function UnifiedDownloader({
                                             <span>{dict.page.faqLinkText}</span>
                                         </Link>
                                     </Button>
-                                    <DeferredFeedbackDialog
-                                        locale={locale}
-                                        dict={dict}
-                                        triggerClassName="w-full justify-start"
-                                    />
                                     <DeferredChangelogDialog
                                         locale={locale}
                                         dict={dict}

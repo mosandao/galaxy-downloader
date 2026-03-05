@@ -51,6 +51,13 @@ export function HelpCards({ dict }: HelpCardsProps) {
                         </div>
                     </div>
                     <div className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-medium">{dict.guide.platformSupport.bilibiliTv.name}</p>
+                            <p className="text-sm text-muted-foreground">{dict.guide.platformSupport.bilibiliTv.summary}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
                         <div>
                             <p className="font-medium">{dict.guide.platformSupport.douyin.name}</p>

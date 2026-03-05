@@ -72,6 +72,7 @@ export interface Dictionary {
         unknownTitle: string;
         platforms: {
             bilibili: string;
+            bilibiliTv: string;
             douyin: string;
             xiaohongshu: string;
             tiktok: string;
@@ -124,6 +125,12 @@ export interface Dictionary {
         platformSupport: {
             title: string;
             bilibili: {
+                name: string;
+                summary: string;
+                features?: string[];
+                limitations?: string[];
+            };
+            bilibiliTv: {
                 name: string;
                 summary: string;
                 features?: string[];

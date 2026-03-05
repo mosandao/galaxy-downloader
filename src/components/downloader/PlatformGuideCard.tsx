@@ -25,6 +25,15 @@ export function PlatformGuideCard({ dict }: PlatformGuideCardProps) {
                     </div>
                 </div>
 
+                {/* Bilibili TV */}
+                <div className="flex items-start gap-2">
+                    <span className="text-sm">✅</span>
+                    <div className="flex-1">
+                        <p className="text-sm font-medium">{dict.guide.platformSupport.bilibiliTv.name}</p>
+                        <p className="text-xs text-muted-foreground">{dict.guide.platformSupport.bilibiliTv.summary}</p>
+                    </div>
+                </div>
+
                 {/* 抖音 */}
                 <div className="flex items-start gap-2">
                     <span className="text-sm">✅</span>

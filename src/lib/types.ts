@@ -23,6 +23,7 @@ export interface UnifiedParseResult {
         platform: string;
         downloadAudioUrl: string | null;
         downloadVideoUrl: string | null;
+        originDownloadAudioUrl?: string | null;
         originDownloadVideoUrl: string | null;
         url: string;
         // 时长（秒）
@@ -52,4 +53,4 @@ export interface UnifiedApiResponse<T = unknown> {
 }
 
 
-export type Platform = 'bili' | 'bilibili' | 'douyin' | 'xiaohongshu' | 'tiktok' | 'unknown'; 
+export type Platform = 'bili' | 'bilibili' | 'bilibili_tv' | 'douyin' | 'xiaohongshu' | 'tiktok' | 'unknown';

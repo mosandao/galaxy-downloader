@@ -46,6 +46,11 @@ const getPlatformBadge = (platform: Platform, dict: HomeDictionary) => {
                 text: dict.history.platforms.bilibili,
                 className: 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
             };
+        case 'bilibili_tv':
+            return {
+                text: dict.history.platforms.bilibiliTv,
+                className: 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+            };
         case 'douyin':
             return {
                 text: dict.history.platforms.douyin,

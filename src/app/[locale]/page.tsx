@@ -67,14 +67,6 @@ export default async function HomePage({
                 heroMeta={
                     <p className="text-center text-xs text-muted-foreground ">
                         {dict.page.feedback}
-                        <a
-                            href="https://github.com/lxw15337674/bilibili-audio-downloader/issues/new"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline"
-                        >
-                            {dict.page.feedbackLinkText}
-                        </a>
                     </p>
                 }
                 footer={
