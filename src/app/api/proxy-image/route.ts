@@ -5,11 +5,13 @@ const ALLOWED_IMAGE_HOSTS = [
     'hdslb.com',
     'bilibili.com',
     'biliimg.com',
+    'bstarstatic.com',
     'xhscdn.com',
     'xiaohongshu.com',
     'tiktokcdn.com',
     'tiktokcdn-us.com',
     'tiktok.com',
+    
 ];
 
 const DEFAULT_ACCEPT =
