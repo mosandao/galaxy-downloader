@@ -8,6 +8,7 @@ const ALLOWED_IMAGE_HOSTS = [
     'xhscdn.com',
     'xiaohongshu.com',
     'tiktokcdn.com',
+    'tiktokcdn-us.com',
     'tiktok.com',
 ];
 
@@ -28,6 +29,13 @@ function getReferer(hostname: string): string | undefined {
     }
     if (normalized.endsWith('xhscdn.com') || normalized.endsWith('xiaohongshu.com')) {
         return 'https://www.xiaohongshu.com/';
+    }
+    if (
+        normalized.endsWith('tiktokcdn.com') ||
+        normalized.endsWith('tiktokcdn-us.com') ||
+        normalized.endsWith('tiktok.com')
+    ) {
+        return 'https://www.tiktok.com/';
     }
     return undefined;
 }
