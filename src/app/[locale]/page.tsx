@@ -8,6 +8,8 @@ import { QuickStartCard } from "@/components/downloader/QuickStartCard"
 import { PlatformGuideCard } from "@/components/downloader/PlatformGuideCard"
 import { FreeSupportCard } from "@/components/downloader/FreeSupportCard"
 import { ViewportSideRailAd } from "@/components/ads/viewport-side-rail-ad"
+import { SideRailAd } from "@/components/ads/side-rail-ad"
+import { AD_MOBILE_MIN_HEIGHT } from "@/lib/constants"
 
 export default async function HomePage({
     params,
@@ -56,6 +58,9 @@ export default async function HomePage({
                         <PlatformGuideCard dict={dict} />
                         <ViewportSideRailAd slot="6380909506" showOn="desktop" />
                     </>
+                }
+                mobileAd={
+                    <SideRailAd slot="5740014745" minHeight={AD_MOBILE_MIN_HEIGHT} />
                 }
                 mobileGuides={
                     <>

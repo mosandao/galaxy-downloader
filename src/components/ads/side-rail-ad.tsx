@@ -13,9 +13,10 @@ declare global {
 interface SideRailAdProps {
   slot: string;
   className?: string;
+  minHeight?: number;
 }
 
-export function SideRailAd({ slot, className }: SideRailAdProps) {
+export function SideRailAd({ slot, className, minHeight = AD_MIN_HEIGHT }: SideRailAdProps) {
   const adRef = useRef<HTMLModElement | null>(null);
   const initializedRef = useRef(false);
   const pathname = usePathname();
@@ -96,11 +97,11 @@ export function SideRailAd({ slot, className }: SideRailAdProps) {
   }, [slot, pathname]);
 
   return (
-    <div className={cn('w-full', className)} style={{ minHeight: `${AD_MIN_HEIGHT}px` }}>
+    <div className={cn('w-full', className)} style={{ minHeight: `${minHeight}px` }}>
       <ins
         ref={adRef}
         className="adsbygoogle block"
-        style={{ display: 'block', width: '100%', minHeight: `${AD_MIN_HEIGHT}px` }}
+        style={{ display: 'block', width: '100%', minHeight: `${minHeight}px` }}
         data-ad-client={ADSENSE_CLIENT_ID}
         data-ad-slot={slot}
         data-ad-format="auto"
