@@ -45,6 +45,14 @@ function isHttpProtocol(protocol: string): boolean {
     return protocol === 'http:' || protocol === 'https:';
 }
 
+function normalizeUpstreamUrl(url: URL): URL {
+    const normalizedUrl = new URL(url.toString());
+    if (normalizedUrl.protocol === 'http:') {
+        normalizedUrl.protocol = 'https:';
+    }
+    return normalizedUrl;
+}
+
 export async function GET(request: NextRequest) {
     const rawUrl = request.nextUrl.searchParams.get('url');
     if (!rawUrl) {
@@ -66,6 +74,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Host is not allowed' }, { status: 403 });
     }
 
+    const upstreamUrl = normalizeUpstreamUrl(targetUrl);
+
     const upstreamHeaders = new Headers();
     upstreamHeaders.set('Accept', DEFAULT_ACCEPT);
     upstreamHeaders.set(
@@ -80,14 +90,16 @@ export async function GET(request: NextRequest) {
 
     let upstreamResponse: Response;
     try {
-        upstreamResponse = await fetch(targetUrl.toString(), {
+        upstreamResponse = await fetch(upstreamUrl.toString(), {
             method: 'GET',
             headers: upstreamHeaders,
             redirect: 'follow',
-            cache: 'force-cache',
-            next: { revalidate: 60 * 60 * 24 },
         });
-    } catch {
+    } catch (error) {
+        console.error('Failed to fetch upstream image', {
+            url: upstreamUrl.toString(),
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json({ error: 'Failed to fetch image from upstream' }, { status: 502 });
     }
 

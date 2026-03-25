@@ -22,5 +22,12 @@
     "traces": {
       "enabled": true
     }
-  }
+  },
+  "routes": [
+    {
+      "pattern": "download-dev.bhwa233.com",
+      "zone_name": "bhwa233.com",
+      "custom_domain": true
+    }
+  ]
 }
