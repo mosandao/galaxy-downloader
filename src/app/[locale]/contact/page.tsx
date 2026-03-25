@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { getMessages } from "next-intl/server"
 import { PageStructuredData } from "@/components/page-structured-data"
-import { getDictionary } from "@/lib/i18n"
 import type { Locale } from "@/lib/i18n/config"
+import type { Dictionary } from "@/lib/i18n/types"
 import {
     buildLanguageAlternates,
     buildLocaleUrl,
@@ -16,7 +17,7 @@ export async function generateMetadata({
     params: Promise<{ locale: Locale }>
 }): Promise<Metadata> {
     const { locale } = await params
-    const dict = await getDictionary(locale)
+    const dict = await getMessages({ locale }) as Dictionary
     const title = dict.contactPage.metaTitle
     const description = dict.contactPage.metaDescription
     const url = buildLocaleUrl(locale, "/contact")
@@ -53,7 +54,7 @@ export default async function ContactPage({
     params: Promise<{ locale: Locale }>
 }) {
     const { locale } = await params
-    const dict = await getDictionary(locale)
+    const dict = await getMessages({ locale }) as Dictionary
     const copy = dict.contactPage
 
     return (

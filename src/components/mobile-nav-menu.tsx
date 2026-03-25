@@ -11,7 +11,8 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { ChangelogDialog } from '@/components/changelog-dialog'
-import { useHomeDictionary } from '@/lib/i18n/home-context'
+import { ThemeSwitcher } from '@/components/theme-switcher'
+import { useDictionary } from '@/i18n/client'
 
 interface MobileNavMenuProps {
     defaultOpen?: boolean
@@ -20,7 +21,7 @@ interface MobileNavMenuProps {
 export function MobileNavMenu({
     defaultOpen = false,
 }: MobileNavMenuProps) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const [open, setOpen] = useState(defaultOpen)
 
     return (
@@ -49,6 +50,9 @@ export function MobileNavMenu({
                     <ChangelogDialog
                         triggerClassName="w-full justify-start"
                     />
+                    <div className="rounded-md border border-border p-1">
+                        <ThemeSwitcher fullWidth />
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

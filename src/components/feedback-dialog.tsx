@@ -21,11 +21,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { MessageSquare, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from '@/lib/deferred-toast'
-import { useHomeDictionary, useHomeLocale } from '@/lib/i18n/home-context'
+import { useDictionary } from '@/i18n/client'
 import type { FeedbackType } from '@/lib/feedback-config'
 import { submitFeedback, validateContent, validateEmail } from '@/lib/feedback'
 import { FEEDBACK_CONFIG } from '@/lib/feedback-config'
 import { cn } from '@/lib/utils'
+import { isApiRequestError, resolveApiErrorMessageWithFallback } from '@/lib/api-errors'
 
 interface FeedbackDialogProps {
     triggerClassName?: string
@@ -40,8 +41,7 @@ export function FeedbackDialog({
     defaultOpen = false,
     onTriggerClick,
 }: FeedbackDialogProps) {
-    const locale = useHomeLocale()
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const feedback = dict.feedback
     const [open, setOpen] = useState(defaultOpen)
     const [feedbackType, setFeedbackType] = useState<FeedbackType>('bug')
@@ -93,28 +93,36 @@ export function FeedbackDialog({
 
         try {
             // 提交反馈
-            const result = await submitFeedback({
+            await submitFeedback({
                 type: feedbackType,
                 content: content.trim(),
                 email: email.trim(),
-            }, locale)
+            })
 
-            if (result.success) {
-                setSubmitStatus('success')
-                toast.success(feedback.toastSuccess)
+            setSubmitStatus('success')
+            toast.success(feedback.toastSuccess)
 
-                // 3秒后自动关闭
-                setTimeout(() => {
-                    setOpen(false)
-                }, 3000)
-            } else {
-                setSubmitStatus('error')
-                toast.error(feedback.toastError)
-            }
+            // 3秒后自动关闭
+            setTimeout(() => {
+                setOpen(false)
+            }, 3000)
         } catch (error) {
-            console.error('Submit error:', error)
+            if (isApiRequestError(error)) {
+                console.error('Feedback submit failed', {
+                    code: error.code,
+                    status: error.status,
+                    requestId: error.requestId,
+                    details: error.details,
+                })
+            } else {
+                console.error('Submit error:', error)
+            }
+
+            const errorMessage = resolveApiErrorMessageWithFallback(error, dict, feedback.errorMessage)
             setSubmitStatus('error')
-            toast.error(feedback.toastError)
+            toast.error(feedback.toastError, {
+                description: errorMessage,
+            })
         } finally {
             setIsSubmitting(false)
         }

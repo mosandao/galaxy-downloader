@@ -1,3 +1,5 @@
+import type {ApiErrorCode} from '@/lib/types'
+
 export interface ResultDict {
     title: string;
     downloadVideo: string;
@@ -75,6 +77,7 @@ export interface Dictionary {
         confirmPartialDownload: string;
         continue: string;
         cancel: string;
+        api: Record<ApiErrorCode, string>;
     };
     history: {
         title: string;
@@ -118,6 +121,7 @@ export interface Dictionary {
         zh: string;
         'zh-tw': string;
         en: string;
+        ja: string;
     };
     douyin: {
         apiLimitDownload: string;
@@ -230,12 +234,14 @@ export interface Dictionary {
             en: string[];
             zh: string[];
             'zh-tw': string[];
+            ja: string[];
         };
         howTo: {
             title: {
                 en: string;
                 zh: string;
                 'zh-tw': string;
+                ja: string;
             };
             steps: {
                 en: Array<{
@@ -247,6 +253,10 @@ export interface Dictionary {
                     text: string;
                 }>;
                 'zh-tw': Array<{
+                    name: string;
+                    text: string;
+                }>;
+                ja: Array<{
                     name: string;
                     text: string;
                 }>;
@@ -308,17 +318,3 @@ export interface Dictionary {
         toastError: string;
     };
 } 
-
-export interface HomeDictionary {
-    unified: Dictionary['unified'];
-    page: Pick<Dictionary['page'], 'openMenuLabel'>;
-    form: Dictionary['form'];
-    errors: Dictionary['errors'];
-    history: Dictionary['history'];
-    toast: Dictionary['toast'];
-    languages: Dictionary['languages'];
-    result: Dictionary['result'];
-    extractAudio: Dictionary['extractAudio'];
-    feedback: Dictionary['feedback'];
-    changelog: Dictionary['changelog'];
-}

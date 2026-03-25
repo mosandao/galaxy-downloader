@@ -19,7 +19,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronsUpDown } from 'lucide-react';
 import { toast } from '@/lib/deferred-toast';
-import { useHomeDictionary } from '@/lib/i18n/home-context';
+import { useDictionary } from '@/i18n/client';
+import type { Dictionary } from '@/lib/i18n/types';
 import { Platform } from '../../lib/types';
 
 export interface DownloadRecord {
@@ -50,7 +51,7 @@ function formatRecordTimestamp(timestamp: number): string {
 }
 
 // 获取平台标签样式
-function getPlatformBadge(platform: Platform, dict: ReturnType<typeof useHomeDictionary>) {
+function getPlatformBadge(platform: Platform, dict: Dictionary) {
     switch (platform) {
         case 'bili':
         case 'bilibili':
@@ -92,7 +93,7 @@ export function DownloadHistory({
     onRedownload,
     defaultOpen = true,
 }: DownloadHistoryProps) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const [searchQuery, setSearchQuery] = useState('');
 

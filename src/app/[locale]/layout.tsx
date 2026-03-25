@@ -3,9 +3,14 @@ import "../globals.css";
 import { DeferredRuntimeServices } from "@/components/deferred-runtime-services"
 import { ThemeProvider } from "@/components/theme-provider";
 import { DeferredToaster } from "@/components/deferred-toaster"
-import { getDictionary } from "@/lib/i18n"
+import { NextIntlClientProvider } from "next-intl";
+import { hasLocale } from "next-intl";
+import { getMessages, setRequestLocale } from "next-intl/server";
+import { AppI18nProvider } from "@/i18n/client";
 import type { Locale } from "@/lib/i18n/config"
+import type { Dictionary } from "@/lib/i18n/types"
 import { i18n } from "@/lib/i18n/config"
+import { routing } from "@/i18n/routing";
 import {
     buildOpenGraphLocaleAlternates,
     IS_INDEXABLE,
@@ -15,6 +20,7 @@ import {
     localeToHtmlLang,
     localeToOpenGraphLocale,
 } from "@/lib/seo"
+import { notFound } from "next/navigation";
 
 // 生成静态参数
 export async function generateStaticParams() {
@@ -28,7 +34,7 @@ export async function generateMetadata({
     params: Promise<{ locale: Locale }>
 }): Promise<Metadata> {
     const { locale } = await params
-    const dict = await getDictionary(locale)
+    const dict = await getMessages({ locale }) as Dictionary
     const localeUrl = buildLocaleUrl(locale)
 
     return {
@@ -112,8 +118,13 @@ export default async function RootLayout({
     params: Promise<{ locale: string }>;
 }>) {
     const { locale: localeParam } = await params
+    if (!hasLocale(routing.locales, localeParam)) {
+        notFound()
+    }
+
     const locale = localeParam as Locale
-    const dict = await getDictionary(locale)
+    setRequestLocale(locale)
+    const dict = await getMessages({ locale }) as Dictionary
     const htmlLang = localeToHtmlLang(locale)
 
     return (
@@ -135,16 +146,20 @@ export default async function RootLayout({
                 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
             </head>
             <body className="antialiased">
-                <DeferredToaster />
-                <DeferredRuntimeServices />
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="dark"
-                    enableSystem={true}
-                    disableTransitionOnChange
-                >
-                    {children}
-                </ThemeProvider>
+                <NextIntlClientProvider locale={locale} messages={dict}>
+                    <AppI18nProvider locale={locale} dictionary={dict}>
+                        <DeferredToaster />
+                        <DeferredRuntimeServices />
+                        <ThemeProvider
+                            attribute="class"
+                            defaultTheme="dark"
+                            enableSystem={true}
+                            disableTransitionOnChange
+                        >
+                            {children}
+                        </ThemeProvider>
+                    </AppI18nProvider>
+                </NextIntlClientProvider>
             </body>
         </html>
     )

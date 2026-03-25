@@ -36,7 +36,24 @@
         "packageFailed": "Packaging failed, please try again",
         "confirmPartialDownload": "{failCount} images failed to load. Download remaining {successCount} images?",
         "continue": "Continue",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "api": {
+            "BAD_REQUEST": "The request parameters are invalid.",
+            "INVALID_JSON": "The request body format is invalid.",
+            "UNSUPPORTED_PLATFORM": "This platform is not supported.",
+            "PLATFORM_MISMATCH": "The link does not match the selected download interface.",
+            "INVALID_DOWNLOAD_TYPE": "The download type is invalid.",
+            "INVALID_QUALITY": "The selected quality is invalid.",
+            "NOT_FOUND": "The resource does not exist or is no longer available.",
+            "DOWNLOAD_URL_NOT_FOUND": "No downloadable media link was found.",
+            "RATE_LIMITED": "Too many requests. Please try again later.",
+            "UPSTREAM_ERROR": "The upstream platform request failed. Please try again later.",
+            "SERVICE_UNAVAILABLE": "The service is temporarily unavailable.",
+            "INTERNAL_ERROR": "An internal server error occurred.",
+            "FEEDBACK_SUBMIT_FAILED": "Failed to submit feedback.",
+            "MEDIA_PROCESSOR_INIT_FAILED": "Failed to initialize the media processor.",
+            "PARSE_FAILED": "Failed to parse the link. Please check whether it is valid."
+        }
     },
     "history": {
         "title": "History",
@@ -121,7 +138,8 @@
     "languages": {
         "zh": "简体中文",
         "zh-tw": "繁體中文",
-        "en": "English"
+        "en": "English",
+        "ja": "日本語"
     },
     "douyin": {
         "apiLimitDownload": "If automatic download fails, please click open link to download manually (download feature is in the bottom right corner of the video)"
@@ -258,13 +276,27 @@
                 "无需注册",
                 "支持多种视频格式",
                 "浏览器处理"
+            ],
+            "ja": [
+                "Bilibili動画からMP3音声を抽出",
+                "Douyin動画をダウンロード",
+                "Xiaohongshuの画像ノートをダウンロード",
+                "Xiaohongshu動画をダウンロード",
+                "TikTok動画をダウンロード",
+                "プラットフォームを自動判別",
+                "高品質な音声・動画ダウンロード",
+                "無料のオンラインツール",
+                "登録不要",
+                "複数の動画形式に対応",
+                "ブラウザ内で処理"
             ]
         },
         "howTo": {
             "title": {
                 "en": "How to download Bilibili, Douyin, Xiaohongshu and TikTok content",
                 "zh": "如何下载哔哩哔哩、抖音、小红书及TikTok内容",
-                "zh-tw": "如何下载哔哩哔哩、抖音、小红书及TikTok内容"
+                "zh-tw": "如何下载哔哩哔哩、抖音、小红书及TikTok内容",
+                "ja": "Bilibili・Douyin・Xiaohongshu・TikTokのコンテンツをダウンロードする方法"
             },
             "steps": {
                 "en": [
@@ -319,6 +351,24 @@
                     {
                         "name": "下载",
                         "text": "点击下载按钮获取对应的音视频或图片内容"
+                    }
+                ],
+                "ja": [
+                    {
+                        "name": "リンクをコピー",
+                        "text": "Bilibili、Douyin、Xiaohongshu、またはTikTokの動画・ノートのリンクをコピーします"
+                    },
+                    {
+                        "name": "リンクを貼り付け",
+                        "text": "サイト上の入力欄にリンクを貼り付けます"
+                    },
+                    {
+                        "name": "自動判別",
+                        "text": "ツールがプラットフォームを自動で判別します（Bilibili / Douyin / Xiaohongshu / TikTok）"
+                    },
+                    {
+                        "name": "ダウンロード",
+                        "text": "ダウンロードボタンをクリックして、音声・動画・画像を取得します"
                     }
                 ]
             }

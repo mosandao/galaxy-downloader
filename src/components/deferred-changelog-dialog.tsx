@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { ScrollText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useHomeDictionary } from '@/lib/i18n/home-context'
+import { useDictionary } from '@/i18n/client'
 
 const ChangelogDialog = dynamic(
     () => import('@/components/changelog-dialog').then((m) => m.ChangelogDialog),
@@ -21,7 +21,7 @@ export function DeferredChangelogDialog({
     triggerClassName,
     triggerIconOnly = false,
 }: DeferredChangelogDialogProps) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const [mounted, setMounted] = useState(false)
     const title = dict.changelog.title
 

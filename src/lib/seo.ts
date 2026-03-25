@@ -30,18 +30,21 @@ export const IS_INDEXABLE = explicitIndexableFlag
 export function localeToHrefLang(locale: Locale): string {
     if (locale === "zh") return "zh-CN"
     if (locale === "zh-tw") return "zh-TW"
+    if (locale === "ja") return "ja-JP"
     return "en"
 }
 
 export function localeToOpenGraphLocale(locale: Locale): string {
     if (locale === "zh") return "zh_CN"
     if (locale === "zh-tw") return "zh_TW"
+    if (locale === "ja") return "ja_JP"
     return "en_US"
 }
 
 export function localeToHtmlLang(locale: Locale): string {
     if (locale === "zh") return "zh-CN"
     if (locale === "zh-tw") return "zh-TW"
+    if (locale === "ja") return "ja-JP"
     return "en"
 }
 

@@ -1,6 +1,6 @@
 # 通用媒体下载器
 
-这是一个基于 [Next.js](https://nextjs.org) 开发的通用媒体下载工具，支持从 Bilibili、抖音、小红书等平台下载视频和音频。
+这是一个基于 [vinext](https://github.com/cloudflare/vinext) 运行的 Next.js App Router 兼容项目，支持从 Bilibili、抖音、小红书等平台下载视频和音频。
 
 ## 功能特点
 
@@ -17,16 +17,16 @@
 首先，运行开发服务器：
 
 ```bash
-npm run dev
-# 或
-yarn dev
-# 或
 pnpm dev
-# 或
-bun dev
 ```
 
 在浏览器中打开 [http://localhost:3000](http://localhost:3000) 即可看到应用界面。
+
+如需回退到原始 Next.js CLI，可使用：
+
+```bash
+pnpm dev:next
+```
 
 ## 使用方法
 
@@ -44,8 +44,10 @@ bun dev
 
 ## 技术栈
 
-- Next.js 16 (App Router)
+- vinext
+- Next.js 16 App Router API 兼容层
 - React 19
+- Vite 8
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
@@ -58,12 +60,26 @@ bun dev
 1. 克隆项目
 2. 安装依赖：
    ```bash
-   npm install
+   pnpm install
    ```
 3. 运行开发服务器：
    ```bash
-   npm run dev
+   pnpm dev
    ```
+4. 生产构建：
+   ```bash
+   pnpm build
+   ```
+5. 启动构建产物：
+   ```bash
+   pnpm start
+   ```
+
+兼容回退脚本：
+
+- `pnpm dev:next`
+- `pnpm build:next`
+- `pnpm start:next`
 
 ## React Compiler 定向验证
 
@@ -103,6 +119,10 @@ npm run react-compiler:check
 
 ## 部署
 
-推荐使用 [Vercel 平台](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) 部署，它是 Next.js 的创建者提供的托管服务。
+默认使用 `vinext` 生成 `dist/` 构建产物。部署前请先执行：
 
-更多部署相关信息，请查看 [Next.js 部署文档](https://nextjs.org/docs/app/building-your-application/deploying)。
+```bash
+pnpm build
+```
+
+如需继续使用原始 Next.js 构建链路，可改用 `pnpm build:next`。

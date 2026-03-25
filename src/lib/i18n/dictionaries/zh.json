@@ -36,7 +36,24 @@
         "packageFailed": "打包失败，请重试",
         "confirmPartialDownload": "有 {failCount} 张图片加载失败，是否下载其余 {successCount} 张图片？",
         "continue": "继续",
-        "cancel": "取消"
+        "cancel": "取消",
+        "api": {
+            "BAD_REQUEST": "请求参数或格式不正确。",
+            "INVALID_JSON": "请求体 JSON 格式不正确。",
+            "UNSUPPORTED_PLATFORM": "暂不支持该链接平台。",
+            "PLATFORM_MISMATCH": "当前链接与所选下载接口不匹配。",
+            "INVALID_DOWNLOAD_TYPE": "下载类型参数不正确。",
+            "INVALID_QUALITY": "清晰度参数不正确。",
+            "NOT_FOUND": "资源不存在或已失效。",
+            "DOWNLOAD_URL_NOT_FOUND": "未找到可下载的媒体链接。",
+            "RATE_LIMITED": "请求过于频繁，请稍后再试。",
+            "UPSTREAM_ERROR": "上游平台请求失败，请稍后再试。",
+            "SERVICE_UNAVAILABLE": "服务暂时不可用。",
+            "INTERNAL_ERROR": "服务器内部发生错误。",
+            "FEEDBACK_SUBMIT_FAILED": "提交反馈失败。",
+            "MEDIA_PROCESSOR_INIT_FAILED": "媒体处理器初始化失败。",
+            "PARSE_FAILED": "链接解析失败，请检查链接是否有效。"
+        }
     },
     "history": {
         "title": "历史记录",
@@ -121,7 +138,8 @@
     "languages": {
         "zh": "简体中文",
         "zh-tw": "繁體中文",
-        "en": "English"
+        "en": "English",
+        "ja": "日本語"
     },
     "douyin": {
         "apiLimitDownload": "如果直接下载失败或速度慢，请点击备用直链手动下载（下载功能在视频右下角）"
@@ -259,13 +277,28 @@
                 "无需注册",
                 "支持多种视频格式",
                 "浏览器处理"
+            ],
+            "ja": [
+                "Bilibili動画からMP3音声を抽出",
+                "Douyin動画をダウンロード",
+                "Xiaohongshuの画像ノートをダウンロード",
+                "Xiaohongshu動画をダウンロード",
+                "Xiaohongshu動画から音声を抽出",
+                "TikTok動画をダウンロード",
+                "プラットフォームを自動判別",
+                "高品質な音声・動画ダウンロード",
+                "無料のオンラインツール",
+                "登録不要",
+                "複数の動画形式に対応",
+                "ブラウザ内で処理"
             ]
         },
         "howTo": {
             "title": {
                 "en": "How to download Bilibili, Douyin, Xiaohongshu and TikTok content",
                 "zh": "如何下载哔哩哔哩、抖音、小红书及TikTok内容",
-                "zh-tw": "如何下载哔哩哔哩、抖音、小红书及TikTok内容"
+                "zh-tw": "如何下载哔哩哔哩、抖音、小红书及TikTok内容",
+                "ja": "Bilibili・Douyin・Xiaohongshu・TikTokのコンテンツをダウンロードする方法"
             },
             "steps": {
                 "en": [
@@ -320,6 +353,24 @@
                     {
                         "name": "下载",
                         "text": "点击下载按钮获取对应的音视频或图片内容"
+                    }
+                ],
+                "ja": [
+                    {
+                        "name": "リンクをコピー",
+                        "text": "Bilibili、Douyin、Xiaohongshu、またはTikTokの動画・ノートのリンクをコピーします"
+                    },
+                    {
+                        "name": "リンクを貼り付け",
+                        "text": "サイト上の入力欄にリンクを貼り付けます"
+                    },
+                    {
+                        "name": "自動判別",
+                        "text": "ツールがプラットフォームを自動で判別します（Bilibili / Douyin / Xiaohongshu / TikTok）"
+                    },
+                    {
+                        "name": "ダウンロード",
+                        "text": "ダウンロードボタンをクリックして、音声・動画・画像を取得します"
                     }
                 ]
             }

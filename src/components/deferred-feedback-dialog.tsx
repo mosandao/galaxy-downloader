@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useHomeDictionary } from '@/lib/i18n/home-context'
+import { useDictionary } from '@/i18n/client'
 
 const FeedbackDialog = dynamic(
     () => import('@/components/feedback-dialog').then((m) => m.FeedbackDialog),
@@ -21,7 +21,7 @@ export function DeferredFeedbackDialog({
     triggerClassName,
     triggerIconOnly = false,
 }: DeferredFeedbackDialogProps) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const [mounted, setMounted] = useState(false)
     const triggerLabel = dict.feedback.triggerButton
 

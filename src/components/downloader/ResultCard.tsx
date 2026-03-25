@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import dynamic from 'next/dynamic';
 import { X, Download, Loader2, Package } from 'lucide-react';
 import Image from "next/image";
-import { useHomeDictionary } from '@/lib/i18n/home-context';
+import { useDictionary } from '@/i18n/client';
 import { UnifiedParseResult, PageInfo } from "../../lib/types";
 import { downloadFile, formatDuration, sanitizeFilename } from "../../lib/utils";
 import { useState, useEffect, useRef } from 'react';
@@ -31,7 +31,7 @@ function replaceTemplate(template: string, token: string, value: string): string
 }
 
 export function ResultCard({ result, onClose }: ResultCardProps) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     if (!result) return null;
 
     const isMultiPart = result.isMultiPart && result.pages && result.pages.length > 1;
@@ -91,7 +91,7 @@ export function ResultCard({ result, onClose }: ResultCardProps) {
  * 单P视频的下载按钮
  */
 function SinglePartButtons({ result }: { result: NonNullable<UnifiedParseResult['data']> }) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const [videoLoading, setVideoLoading] = useState(false);
     const [audioLoading, setAudioLoading] = useState(false);
     const showExtractAudio = result.platform === 'douyin' || result.platform === 'xiaohongshu' || result.platform === 'tiktok';
@@ -146,7 +146,7 @@ function SinglePartButtons({ result }: { result: NonNullable<UnifiedParseResult[
  * 多P视频的分P列表
  */
 function MultiPartList({ pages, currentPage }: { pages: PageInfo[]; currentPage?: number }) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     const [loadingKeys, setLoadingKeys] = useState<Set<string>>(new Set());
 
     const handleDownload = (url: string, key: string) => {
@@ -234,7 +234,7 @@ function ImageNoteGrid({
     platform: string;
     singleImageMode?: boolean;
 }) {
-    const dict = useHomeDictionary()
+    const dict = useDictionary()
     // 合并的状态类型
     type ImageLoadState = {
         loading: boolean;

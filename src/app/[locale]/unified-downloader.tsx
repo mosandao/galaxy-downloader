@@ -8,13 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { toast } from '@/lib/deferred-toast';
 import { Loader2, Github, History } from 'lucide-react';
-import type { Locale } from "@/lib/i18n/config";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { FeedbackDialog } from '@/components/feedback-dialog';
 import { ChangelogDialog } from '@/components/changelog-dialog';
 import { MobileNavMenu } from '@/components/mobile-nav-menu';
 import { API_ENDPOINTS } from '@/lib/config';
-import { appendLangQuery, buildApiI18nHeaders } from '@/lib/api-i18n';
 
 import type { DownloadRecord } from './download-history';
 import { useLocalStorageState } from '@/hooks/use-local-storage-state';
@@ -22,7 +21,8 @@ import { useInstallPrompt } from '@/hooks/use-install-prompt';
 import type { UnifiedParseResult } from '@/lib/types';
 import { Platform } from '@/lib/types';
 import { DOWNLOAD_HISTORY_MAX_COUNT, DOWNLOAD_HISTORY_STORAGE_KEY } from '@/lib/constants';
-import { useHomeI18n } from '@/lib/i18n/home-context';
+import { useDictionary } from '@/i18n/client';
+import { ApiRequestError, isApiRequestError, resolveApiErrorMessage } from '@/lib/api-errors';
 
 const UnifiedDownloaderLowerSections = dynamic(
     () => import('./unified-downloader-lower-sections').then((m) => m.UnifiedDownloaderLowerSections),
@@ -43,24 +43,31 @@ type UnifiedParseSuccessResult = UnifiedParseResult & {
     data: NonNullable<UnifiedParseResult['data']>;
 };
 
-async function requestUnifiedParse(videoUrl: string, locale: Locale): Promise<UnifiedParseSuccessResult> {
+async function requestUnifiedParse(videoUrl: string): Promise<UnifiedParseSuccessResult> {
     const params = new URLSearchParams({ url: videoUrl });
-    const requestUrl = appendLangQuery(`${API_ENDPOINTS.unified.parse}?${params.toString()}`, locale);
+    const requestUrl = `${API_ENDPOINTS.unified.parse}?${params.toString()}`;
     const response = await fetch(requestUrl, {
         method: 'GET',
         cache: 'no-store',
-        headers: buildApiI18nHeaders(locale),
     });
 
     let payload: UnifiedParseResult | null = null;
     try {
         payload = await response.json() as UnifiedParseResult;
     } catch {
-        throw new Error('');
+        throw new ApiRequestError({
+            status: response.status,
+        });
     }
 
     if (!response.ok || !payload?.success || !payload.data) {
-        throw new Error(payload?.error || '');
+        throw new ApiRequestError({
+            code: payload?.code,
+            status: payload?.status ?? response.status,
+            requestId: payload?.requestId,
+            details: payload?.details,
+            fallbackMessage: payload?.error || payload?.message,
+        });
     }
 
     return payload as UnifiedParseSuccessResult;
@@ -74,7 +81,7 @@ export function UnifiedDownloader({
     heroMeta,
     footer,
 }: UnifiedDownloaderProps) {
-    const { dict, locale } = useHomeI18n()
+    const dict = useDictionary()
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -117,7 +124,7 @@ export function UnifiedDownloader({
         void import('./unified-downloader-lower-sections');
 
         // 调用解析接口获取视频信息
-        const apiResult = await requestUnifiedParse(videoUrl, locale);
+        const apiResult = await requestUnifiedParse(videoUrl);
         const platformCode = apiResult.data.platform;
         const platformLabel = getPlatformLabel(platformCode);
 
@@ -180,7 +187,16 @@ export function UnifiedDownloader({
 
             setUrl('');
         } catch (err) {
-            const errorMessage = err instanceof Error && err.message ? err.message : dict.errors.downloadError;
+            if (isApiRequestError(err)) {
+                console.error('Unified parse request failed', {
+                    code: err.code,
+                    status: err.status,
+                    requestId: err.requestId,
+                    details: err.details,
+                });
+            }
+
+            const errorMessage = resolveApiErrorMessage(err, dict);
             setError(errorMessage);
             toast.error(dict.errors.downloadFailed, {
                 description: errorMessage
@@ -234,7 +250,7 @@ export function UnifiedDownloader({
                 className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm"
                 style={{ paddingTop: 'env(safe-area-inset-top)' }}
             >
-                <div className="md:hidden max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
+                <div className="md:hidden max-w-7xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 min-w-0">
                         {showHistoryShortcut ? (
                             <Button
@@ -270,7 +286,7 @@ export function UnifiedDownloader({
                         <MobileNavMenu />
                     </div>
                 </div>
-                <div className="hidden md:flex max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 justify-end items-center gap-1">
+                <div className="hidden md:flex max-w-7xl mx-auto px-3 sm:px-4 md:px-5 py-3 justify-end items-center gap-1">
                     <Button variant="ghost" size="sm" asChild>
                         <a href="https://github.com/lxw15337674/galaxy-downloader" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                             <Github className="h-4 w-4" />
@@ -279,14 +295,15 @@ export function UnifiedDownloader({
                     </Button>
                     <FeedbackDialog />
                     <ChangelogDialog />
+                    <ThemeSwitcher />
                     <LanguageSwitcher />
                 </div>
             </div>
 
-            <main className="flex-1 p-3 sm:p-4 md:p-6 pt-4">
+            <main className="flex-1 p-3 sm:p-4 md:p-4 pt-4">
                 {/* PC端三栏布局，移动端垂直布局 */}
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                         {/* 左栏：快速入门指南 (PC端显示，移动端隐藏) */}
                         <div className="hidden lg:block">
                             <div className="sticky top-20 flex flex-col gap-4">

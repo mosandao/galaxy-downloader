@@ -15,6 +15,8 @@ const localeMapping: Record<string, string> = {
     'zh-Hans': 'zh',
     'zh-Hans-CN': 'zh',
     'zh': 'zh',
+    'ja-JP': 'ja',
+    'ja': 'ja',
 }
 
 export function isBotUserAgent(userAgent: string): boolean {

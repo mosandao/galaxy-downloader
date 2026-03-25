@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Globe, ChevronDown, Check } from 'lucide-react'
 import type { Locale } from '@/lib/i18n/config'
-import { useHomeDictionary, useHomeLocale } from '@/lib/i18n/home-context'
+import { useAppLocale } from '@/i18n/client'
+import { getLocaleLabel, SUPPORTED_LOCALES } from '@/lib/i18n/locale-meta'
 import { LOCALE_COOKIE_NAME, LOCALE_COOKIE_MAX_AGE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
@@ -20,8 +21,7 @@ function setLocaleCookie(locale: Locale) {
 }
 
 export function LanguageSwitcher({ compact = false, defaultOpen = false }: LanguageSwitcherProps) {
-    const currentLocale = useHomeLocale()
-    const dict = useHomeDictionary()
+    const currentLocale = useAppLocale()
     const [isOpen, setIsOpen] = useState(defaultOpen)
     const pathname = usePathname()
     const router = useRouter()
@@ -79,17 +79,20 @@ export function LanguageSwitcher({ compact = false, defaultOpen = false }: Langu
         <div className="relative" ref={dropdownRef}>
             <Button
                 variant="ghost"
-                size={compact ? 'icon' : 'sm'}
+                size="sm"
                 onClick={() => setIsOpen(!isOpen)}
-                className={cn('flex items-center gap-2 text-sm', compact && 'h-9 w-9 p-0')}
-                aria-label={dict.languages[currentLocale]}
+                className={cn(
+                    'flex items-center gap-2 text-sm',
+                    compact && 'h-9 max-w-[8rem] gap-1.5 px-2.5'
+                )}
+                aria-label={getLocaleLabel(currentLocale)}
             >
                 <Globe className="h-4 w-4" />
                 {compact ? (
-                    <span className="sr-only">{dict.languages[currentLocale]}</span>
+                    <span className="max-w-[5.5rem] truncate">{getLocaleLabel(currentLocale)}</span>
                 ) : (
                     <>
-                        <span>{dict.languages[currentLocale]}</span>
+                        <span>{getLocaleLabel(currentLocale)}</span>
                         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </>
                 )}
@@ -98,13 +101,13 @@ export function LanguageSwitcher({ compact = false, defaultOpen = false }: Langu
             {isOpen && (
                 <div className="absolute right-0 top-full mt-1 w-40 bg-background border border-border rounded-md shadow-lg z-50">
                     <div className="py-1">
-                        {(Object.entries(dict.languages) as [Locale, string][]).map(([locale, label]) => (
+                        {SUPPORTED_LOCALES.map((locale) => (
                             <button
                                 key={locale}
                                 onClick={() => handleLanguageChange(locale)}
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center justify-between transition-colors"
                             >
-                                <span>{label}</span>
+                                <span>{getLocaleLabel(locale)}</span>
                                 {locale === currentLocale && (
                                     <Check className="h-4 w-4 text-primary" />
                                 )}

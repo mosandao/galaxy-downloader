@@ -6,12 +6,13 @@ import {
     normalizeCookieLocale,
     resolveLocaleForRequest,
 } from './lib/seo-routing'
+import { LOCALE_COOKIE_NAME, LOCALE_COOKIE_MAX_AGE } from './lib/constants'
 
 const ACCEPT_LANGUAGE_CACHE_LIMIT = 64
 const acceptLanguageCache = new Map<string, string[]>()
 
 function getLocaleFromCookie(request: NextRequest): string | null {
-    const cookieLocale = request.cookies.get('preferred-locale')?.value
+    const cookieLocale = request.cookies.get(LOCALE_COOKIE_NAME)?.value
     return normalizeCookieLocale(cookieLocale ?? null, i18n.locales)
 }
 
@@ -87,9 +88,9 @@ export function proxy(request: NextRequest) {
 
     // 设置 Cookie 记住用户语言偏好（仅在真实用户请求且非已有 cookie 时设置）
     if (!isBotUserAgent(userAgent) && !cookieLocale) {
-        response.cookies.set('preferred-locale', locale, {
+        response.cookies.set(LOCALE_COOKIE_NAME, locale, {
             path: '/',
-            maxAge: 31536000, // 1年
+            maxAge: LOCALE_COOKIE_MAX_AGE,
             sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production'
         })
@@ -98,9 +99,11 @@ export function proxy(request: NextRequest) {
     return response
 }
 
+export default proxy
+
 export const config = {
     matcher: [
         // 仅匹配“无 locale 前缀”的页面请求，减少中间件对已本地化路由的额外开销
-        '/((?!api|_next/static|_next/image|favicon.ico|.*\\.|(?:zh|zh-tw|en)(?:/|$)).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|.*\\.|(?:zh|zh-tw|en|ja)(?:/|$)).*)',
     ],
 } 

@@ -7,7 +7,7 @@ export const DOWNLOAD_HISTORY_MAX_COUNT = 30;
 export const DOWNLOAD_HISTORY_STORAGE_KEY = 'download-history';
 
 // Cookie 相关
-export const LOCALE_COOKIE_NAME = 'preferred-locale';
+export const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
 export const LOCALE_COOKIE_MAX_AGE = 31536000; // 1年，单位：秒
 
 // Toast 相关

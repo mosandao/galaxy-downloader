@@ -1,9 +1,9 @@
-import { getDictionary } from "@/lib/i18n"
+import { getMessages } from "next-intl/server"
 import type { Locale } from "@/lib/i18n/config"
+import type { Dictionary } from "@/lib/i18n/types"
 import Link from "next/link"
 import { StructuredData } from "@/components/structured-data"
 import { UnifiedDownloaderClient } from "./unified-downloader-client"
-import { pickHomeDictionary } from "@/lib/i18n/home-dictionary"
 import { QuickStartCard } from "@/components/downloader/QuickStartCard"
 import { PlatformGuideCard } from "@/components/downloader/PlatformGuideCard"
 import { FreeSupportCard } from "@/components/downloader/FreeSupportCard"
@@ -15,15 +15,12 @@ export default async function HomePage({
     params: Promise<{ locale: Locale }>
 }) {
     const { locale } = await params
-    const dict = await getDictionary(locale)
-    const homeDict = pickHomeDictionary(dict)
+    const dict = await getMessages({ locale }) as Dictionary
 
     return (
         <>
             <StructuredData locale={locale} dict={dict} />
             <UnifiedDownloaderClient
-                dict={homeDict}
-                locale={locale}
                 leftRail={
                     <>
                         <QuickStartCard dict={dict} />

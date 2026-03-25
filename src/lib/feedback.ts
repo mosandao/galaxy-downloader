@@ -1,13 +1,11 @@
 import { FEEDBACK_CONFIG, type FeedbackData } from './feedback-config'
-import type { Locale } from './i18n/config'
-import { appendLangQuery, buildApiAcceptLanguage } from './api-i18n'
+import { ApiRequestError } from './api-errors'
+import type { UnifiedApiResponse } from './types'
 
 /**
  * 提交反馈到自建API
- * @param data 反馈数据
- * @returns Promise<{ success: boolean, error?: string }>
  */
-export async function submitFeedback(data: FeedbackData, locale: Locale): Promise<{ success: boolean; error?: string }> {
+export async function submitFeedback(data: FeedbackData): Promise<void> {
   try {
     // 构建请求体
     const requestBody = {
@@ -17,35 +15,38 @@ export async function submitFeedback(data: FeedbackData, locale: Locale): Promis
     }
 
     // 发送POST请求到自建API
-    const response = await fetch(appendLangQuery(FEEDBACK_CONFIG.apiUrl, locale), {
+    const response = await fetch(FEEDBACK_CONFIG.apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept-Language': buildApiAcceptLanguage(locale),
       },
       body: JSON.stringify(requestBody),
     })
 
     // 解析响应
-    const result = await response.json()
+    const result = await response.json() as UnifiedApiResponse<{ feedbackId?: string }>
 
     // 检查响应状态
     if (response.ok && result.success) {
-      return { success: true }
-    } else {
-      return {
-        success: false,
-        error: result.error || result.message || 'Submission failed'
-      }
+      return
     }
 
+    throw new ApiRequestError({
+      code: result.code,
+      status: result.status ?? response.status,
+      requestId: result.requestId,
+      details: result.details,
+      fallbackMessage: result.error || result.message,
+    })
+
   } catch (error) {
-    // 网络错误或其他异常
-    console.error('Failed to submit feedback:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+    if (error instanceof ApiRequestError) {
+      throw error
     }
+
+    throw new ApiRequestError({
+      fallbackMessage: error instanceof Error ? error.message : undefined
+    })
   }
 }
 

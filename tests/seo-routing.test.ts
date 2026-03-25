@@ -7,8 +7,8 @@ import {
     resolveLocaleFromAcceptLanguage,
 } from '../src/lib/seo-routing.ts'
 
-const locales = ['zh', 'zh-tw', 'en'] as const
-const defaultLocale = 'zh'
+const locales = ['zh', 'zh-tw', 'en', 'ja'] as const
+const defaultLocale = 'en'
 
 test('detects bot user agents', () => {
     assert.equal(isBotUserAgent('Mozilla/5.0 Googlebot/2.1'), true)
@@ -55,6 +55,10 @@ test('accept-language mapping supports zh-Hant fallback to zh-tw', () => {
     assert.equal(resolveLocaleFromAcceptLanguage(['zh-Hant', 'en-US'], locales, defaultLocale), 'zh-tw')
 })
 
+test('accept-language mapping supports ja fallback to ja', () => {
+    assert.equal(resolveLocaleFromAcceptLanguage(['ja-JP', 'en-US'], locales, defaultLocale), 'ja')
+})
+
 test('falls back to default locale for unsupported accept-language', () => {
-    assert.equal(resolveLocaleFromAcceptLanguage(['fr-FR'], locales, defaultLocale), 'zh')
+    assert.equal(resolveLocaleFromAcceptLanguage(['fr-FR'], locales, defaultLocale), 'en')
 })

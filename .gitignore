@@ -47,3 +47,4 @@ public/fallback-*.js
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+/dist/

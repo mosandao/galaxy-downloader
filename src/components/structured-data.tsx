@@ -9,17 +9,17 @@ interface StructuredDataProps {
 
 export function StructuredData({ locale, dict }: StructuredDataProps) {
     const localeUrl = buildLocaleUrl(locale)
-    const seoLocale: keyof Dictionary['seo']['features'] = locale === 'zh-tw'
-        ? 'zh-tw'
-        : locale === 'en'
-          ? 'en'
-          : 'zh'
+    const seoLocale: keyof Dictionary['seo']['features'] = locale
 
     const websiteSchema = {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": dict.metadata.siteName,
-        "alternateName": locale === 'en' ? "Universal Media Downloader" : "通用媒体下载器",
+        "alternateName": locale === 'en'
+            ? "Universal Media Downloader"
+            : locale === 'ja'
+              ? "ユニバーサルメディアダウンローダー"
+              : "通用媒体下载器",
         "description": dict.metadata.description,
         "url": localeUrl,
         "inLanguage": localeToHtmlLang(locale),

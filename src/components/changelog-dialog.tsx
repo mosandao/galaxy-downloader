@@ -12,7 +12,7 @@ import {
 import { ScrollText } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import changelogData from '@/lib/changelog.json'
-import { useHomeDictionary, useHomeLocale } from '@/lib/i18n/home-context'
+import { useAppLocale, useDictionary } from '@/i18n/client'
 import { cn } from '@/lib/utils'
 
 interface ChangelogDialogProps {
@@ -28,8 +28,8 @@ export function ChangelogDialog({
     defaultOpen = false,
     onTriggerClick,
 }: ChangelogDialogProps) {
-    const locale = useHomeLocale()
-    const dict = useHomeDictionary()
+    const locale = useAppLocale()
+    const dict = useDictionary()
     const [open, setOpen] = useState(defaultOpen)
 
     // 获取当前语言的更新内容，如果没有则回退到英文
