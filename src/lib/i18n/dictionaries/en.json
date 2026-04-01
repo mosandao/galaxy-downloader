@@ -71,6 +71,7 @@
             "bilibili": "Bilibili",
             "bilibiliTv": "Bilibili TV",
             "douyin": "Douyin",
+            "wechat": "WeChat",
             "xiaohongshu": "Xiaohongshu",
             "tiktok": "TikTok",
             "unknown": "Unknown",
@@ -193,6 +194,11 @@
                 "name": "Douyin",
                 "summary": "Video / Image / Share Code",
                 "features": ["Video", "Image", "Share Code"]
+            },
+            "wechat": {
+                "name": "WeChat",
+                "summary": "Article Videos",
+                "features": ["Article Videos"]
             },
             "xiaohongshu": {
                 "name": "Xiaohongshu",
@@ -420,6 +426,9 @@
         "downloadAudio": "Download Audio",
         "originDownloadVideo": "Backup Direct Link",
         "totalParts": "Total {count} parts",
+        "articleVideoList": "Article Videos",
+        "articleVideoCount": "Total {count} videos",
+        "articleVideoUntitled": "Video {index}",
         "downloadImage": "Download Image",
         "coverLabel": "Cover",
         "imageIndexLabel": "Image #{index}",

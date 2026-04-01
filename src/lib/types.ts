@@ -35,6 +35,24 @@ export interface PageInfo {
     downloadVideoUrl: string | null;
 }
 
+export interface VideoQualityOption {
+    quality: string;
+    label?: string;
+    width?: number;
+    height?: number;
+    formatId?: number;
+}
+
+export interface EmbeddedVideoInfo {
+    id: string;
+    title: string;
+    cover?: string | null;
+    duration?: number;
+    qualityOptions?: VideoQualityOption[];
+    downloadVideoUrl?: string | null;
+    originDownloadVideoUrl?: string | null;
+}
+
 export interface UnifiedParseResult {
     success: boolean;
     code?: ApiErrorCode | string;
@@ -60,6 +78,8 @@ export interface UnifiedParseResult {
         // 小红书相关字段
         noteType?: 'video' | 'image';
         images?: string[];
+        // 微信公众号文章视频列表
+        videos?: EmbeddedVideoInfo[];
     };
     error?: string;
     message?: string;
@@ -88,6 +108,7 @@ export type Platform =
     | 'bilibili'
     | 'bilibili_tv'
     | 'douyin'
+    | 'wechat'
     | 'xiaohongshu'
     | 'tiktok'
     | 'instagram'

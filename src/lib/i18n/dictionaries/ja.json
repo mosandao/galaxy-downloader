@@ -71,6 +71,7 @@
             "bilibili": "Bilibili",
             "bilibiliTv": "Bilibili TV",
             "douyin": "Douyin",
+            "wechat": "WeChat",
             "xiaohongshu": "Xiaohongshu",
             "tiktok": "TikTok",
             "unknown": "不明",
@@ -193,6 +194,11 @@
                 "name": "Douyin",
                 "summary": "動画 / 画像 / 共有コード",
                 "features": ["動画", "画像", "共有コード"]
+            },
+            "wechat": {
+                "name": "WeChat",
+                "summary": "記事内動画",
+                "features": ["記事内動画"]
             },
             "xiaohongshu": {
                 "name": "Xiaohongshu",
@@ -420,6 +426,9 @@
         "downloadAudio": "音声をダウンロード",
         "originDownloadVideo": "予備の直接リンク",
         "totalParts": "全 {count} パート",
+        "articleVideoList": "記事内動画",
+        "articleVideoCount": "全 {count} 本の動画",
+        "articleVideoUntitled": "動画 {index}",
         "downloadImage": "画像をダウンロード",
         "coverLabel": "カバー",
         "imageIndexLabel": "画像 #{index}",

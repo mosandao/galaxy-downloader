@@ -71,6 +71,7 @@
             "bilibili": "嗶哩嗶哩",
             "bilibiliTv": "Bilibili TV",
             "douyin": "抖音",
+            "wechat": "微信公眾號",
             "xiaohongshu": "小紅書",
             "tiktok": "TikTok",
             "unknown": "未知",
@@ -193,6 +194,11 @@
                 "name": "抖音",
                 "summary": "影片 / 圖文 / 口令",
                 "features": ["影片", "圖文", "口令"]
+            },
+            "wechat": {
+                "name": "微信公眾號",
+                "summary": "文章影片",
+                "features": ["文章影片"]
             },
             "xiaohongshu": {
                 "name": "小紅書",
@@ -420,6 +426,9 @@
         "downloadAudio": "下載音訊",
         "originDownloadVideo": "備用直鏈",
         "totalParts": "共 {count} 個分P",
+        "articleVideoList": "文章影片",
+        "articleVideoCount": "共 {count} 個影片",
+        "articleVideoUntitled": "影片 {index}",
         "downloadImage": "下載圖片",
         "coverLabel": "封面",
         "imageIndexLabel": "圖片 #{index}",
