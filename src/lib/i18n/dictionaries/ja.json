@@ -159,6 +159,22 @@
         "errorConvert": "音声変換に失敗しました。動画形式が未対応の可能性があります。",
         "errorMemory": "動画ファイルが大きすぎてブラウザのメモリが不足しています。デスクトップツールの利用をおすすめします。"
     },
+    "audioTool": {
+        "triggerButton": "音声抽出",
+        "title": "音声抽出",
+        "description": "共有リンクを貼り付けると自動解析します。まずプラットフォームのネイティブ音声を優先し、ない場合は動画から抽出します。",
+        "placeholder": "動画や投稿の共有リンクを貼り付けてください...",
+        "strategyHint": "まずネイティブ音声をダウンロードし、利用できない場合はブラウザ内で抽出します。",
+        "pasteButton": "貼り付け",
+        "submitButton": "音声を抽出",
+        "processingButton": "処理中...",
+        "statusIdle": "リンク入力待ち",
+        "statusParsing": "解析中...",
+        "statusDirectDownloading": "ネイティブ音声を検出。ダウンロード中...",
+        "statusFallbackExtracting": "ネイティブ音声がないため、ブラウザ抽出を準備中...",
+        "statusCompleted": "処理完了。ダウンロードを開始しました",
+        "noAudioSource": "解析は成功しましたが、利用可能な音声または動画ソースが見つかりませんでした"
+    },
     "guide": {
         "quickStart": {
             "title": "3ステップで簡単ダウンロード",
@@ -418,7 +434,8 @@
         "title": "解析結果",
         "downloadVideo": "動画をダウンロード",
         "downloadAudio": "音声をダウンロード",
-        "originDownloadVideo": "予備の直接リンク",
+        "originDownloadVideo": "動画直リンク",
+        "originDownloadAudio": "音声直リンク",
         "totalParts": "全 {count} パート",
         "downloadImage": "画像をダウンロード",
         "coverLabel": "カバー",

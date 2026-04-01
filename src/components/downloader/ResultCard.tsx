@@ -1,20 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import dynamic from 'next/dynamic';
-import { X, Download, Loader2, Package } from 'lucide-react';
+import { X, Download, ExternalLink, Loader2, Package } from 'lucide-react';
 import Image from "next/image";
 import { useDictionary } from '@/i18n/client';
 import { UnifiedParseResult, PageInfo } from "../../lib/types";
 import { downloadFile, formatDuration, sanitizeFilename } from "../../lib/utils";
 import { useState, useEffect, useRef } from 'react';
 import { toast } from '@/lib/deferred-toast';
-import { normalizePlatform, supportsAudioExtraction } from '@/lib/platforms';
 import { shouldHideSingleImagePreview, shouldShowVideoDownloadButton } from "./result-card-visibility";
-
-const ExtractAudioButton = dynamic(
-    () => import("./ExtractAudioButton").then((m) => m.ExtractAudioButton),
-    { ssr: false }
-);
 
 interface ResultCardProps {
     result: UnifiedParseResult['data'] | null | undefined
@@ -106,11 +99,17 @@ function SinglePartButtons({ result }: { result: NonNullable<UnifiedParseResult[
     const dict = useDictionary()
     const [videoLoading, setVideoLoading] = useState(false);
     const [audioLoading, setAudioLoading] = useState(false);
-    const normalizedPlatform = normalizePlatform(result.platform);
-    const showExtractAudio = supportsAudioExtraction(normalizedPlatform);
     const videoDownloadUrl = result.downloadVideoUrl || result.originDownloadVideoUrl;
     const audioDownloadUrl = result.downloadAudioUrl || result.originDownloadAudioUrl || null;
     const showVideoDownload = shouldShowVideoDownloadButton(videoDownloadUrl);
+    const showOriginVideoLink =
+        typeof result.originDownloadVideoUrl === 'string'
+        && result.originDownloadVideoUrl.length > 0
+        && result.originDownloadVideoUrl !== videoDownloadUrl;
+    const showOriginAudioLink =
+        typeof result.originDownloadAudioUrl === 'string'
+        && result.originDownloadAudioUrl.length > 0
+        && result.originDownloadAudioUrl !== audioDownloadUrl;
 
     const handleDownload = (url: string, setLoading: (v: boolean) => void) => {
         setLoading(true);
@@ -143,14 +142,35 @@ function SinglePartButtons({ result }: { result: NonNullable<UnifiedParseResult[
                         {dict.result.downloadAudio}
                     </Button>
                 )}
-
-                {showExtractAudio && videoDownloadUrl && (
-                    <ExtractAudioButton
-                        videoUrl={videoDownloadUrl}
-                        title={result.title}
-                    />
-                )}
             </div>
+            {(showOriginVideoLink || showOriginAudioLink) && (
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-muted-foreground">
+                    {showOriginVideoLink && (
+                        <Button variant="link" size="sm" className="h-auto px-0 py-0 text-xs" asChild>
+                            <a
+                                href={result.originDownloadVideoUrl!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                {dict.result.originDownloadVideo}
+                            </a>
+                        </Button>
+                    )}
+                    {showOriginAudioLink && (
+                        <Button variant="link" size="sm" className="h-auto px-0 py-0 text-xs" asChild>
+                            <a
+                                href={result.originDownloadAudioUrl!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                {dict.result.originDownloadAudio}
+                            </a>
+                        </Button>
+                    )}
+                </div>
+            )}
         </>
     );
 }

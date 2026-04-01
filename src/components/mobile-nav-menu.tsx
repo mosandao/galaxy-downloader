@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Github, Menu } from 'lucide-react'
+import { Github, Menu, Music } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -16,13 +16,22 @@ import { useDictionary } from '@/i18n/client'
 
 interface MobileNavMenuProps {
     defaultOpen?: boolean
+    onOpenAudioTool?: () => void
 }
 
 export function MobileNavMenu({
     defaultOpen = false,
+    onOpenAudioTool,
 }: MobileNavMenuProps) {
     const dict = useDictionary()
     const [open, setOpen] = useState(defaultOpen)
+
+    const handleOpenAudioTool = () => {
+        setOpen(false)
+        window.setTimeout(() => {
+            onOpenAudioTool?.()
+        }, 180)
+    }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -36,6 +45,10 @@ export function MobileNavMenu({
                     <DialogTitle className="text-base">{dict.unified.pageTitle}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleOpenAudioTool}>
+                        <Music className="h-4 w-4" />
+                        <span>{dict.audioTool.triggerButton}</span>
+                    </Button>
                     <Button variant="outline" className="w-full justify-start" asChild>
                         <a
                             href="https://github.com/lxw15337674/galaxy-downloader"

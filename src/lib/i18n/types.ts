@@ -5,6 +5,7 @@ export interface ResultDict {
     downloadVideo: string;
     downloadAudio: string;
     originDownloadVideo: string;
+    originDownloadAudio: string;
     totalParts: string;
     downloadImage: string;
     coverLabel: string;
@@ -140,6 +141,22 @@ export interface Dictionary {
         errorDownload: string;
         errorConvert: string;
         errorMemory: string;
+    };
+    audioTool: {
+        triggerButton: string;
+        title: string;
+        description: string;
+        placeholder: string;
+        strategyHint: string;
+        pasteButton: string;
+        submitButton: string;
+        processingButton: string;
+        statusIdle: string;
+        statusParsing: string;
+        statusDirectDownloading: string;
+        statusFallbackExtracting: string;
+        statusCompleted: string;
+        noAudioSource: string;
     };
     guide: {
         quickStart: {

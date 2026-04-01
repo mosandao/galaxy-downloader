@@ -159,6 +159,22 @@
         "errorConvert": "音訊轉換失敗，影片格式可能不支援",
         "errorMemory": "影片檔案過大，瀏覽器記憶體不足，建議使用桌面工具"
     },
+    "audioTool": {
+        "triggerButton": "音訊提取",
+        "title": "音訊提取",
+        "description": "貼上分享連結後自動解析。優先使用平台原生音訊，沒有時再從影片提取。",
+        "placeholder": "請貼上影片或貼文分享連結...",
+        "strategyHint": "優先下載平台原生音訊；若無可用音訊來源，將自動使用瀏覽器提取。",
+        "pasteButton": "貼上",
+        "submitButton": "提取音訊",
+        "processingButton": "處理中...",
+        "statusIdle": "等待輸入連結",
+        "statusParsing": "解析中...",
+        "statusDirectDownloading": "已偵測到原生音訊，正在下載...",
+        "statusFallbackExtracting": "未偵測到原生音訊，準備以瀏覽器提取...",
+        "statusCompleted": "處理完成，已開始下載",
+        "noAudioSource": "解析成功，但未找到可用的音訊或影片來源"
+    },
     "guide": {
         "quickStart": {
             "title": "三步輕鬆下載",
@@ -418,7 +434,8 @@
         "title": "解析結果",
         "downloadVideo": "下載影片",
         "downloadAudio": "下載音訊",
-        "originDownloadVideo": "備用直鏈",
+        "originDownloadVideo": "影片直鏈",
+        "originDownloadAudio": "音訊直鏈",
         "totalParts": "共 {count} 個分P",
         "downloadImage": "下載圖片",
         "coverLabel": "封面",

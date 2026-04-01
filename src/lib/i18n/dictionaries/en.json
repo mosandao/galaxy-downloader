@@ -159,6 +159,22 @@
         "errorConvert": "Audio conversion failed, video format may not be supported",
         "errorMemory": "Video file too large, browser memory insufficient, please use desktop tools"
     },
+    "audioTool": {
+        "triggerButton": "Audio Extract",
+        "title": "Audio Extract",
+        "description": "Paste a share link to parse automatically. Native platform audio is preferred; video extraction is used only when needed.",
+        "placeholder": "Paste a video or post share link...",
+        "strategyHint": "Prefer native platform audio download; if unavailable, browser extraction will be used automatically.",
+        "pasteButton": "Paste",
+        "submitButton": "Extract Audio",
+        "processingButton": "Processing...",
+        "statusIdle": "Waiting for link input",
+        "statusParsing": "Parsing...",
+        "statusDirectDownloading": "Native audio detected, downloading...",
+        "statusFallbackExtracting": "Native audio not found, preparing browser extraction...",
+        "statusCompleted": "Done, download started",
+        "noAudioSource": "Parsed successfully, but no available audio or video source was found"
+    },
     "guide": {
         "quickStart": {
             "title": "Easy 3-Step Download",
@@ -418,7 +434,8 @@
         "title": "Parse Result",
         "downloadVideo": "Download Video",
         "downloadAudio": "Download Audio",
-        "originDownloadVideo": "Backup Direct Link",
+        "originDownloadVideo": "Video Direct Link",
+        "originDownloadAudio": "Audio Direct Link",
         "totalParts": "Total {count} parts",
         "downloadImage": "Download Image",
         "coverLabel": "Cover",
