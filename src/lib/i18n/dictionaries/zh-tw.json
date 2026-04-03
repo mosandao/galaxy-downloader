@@ -20,7 +20,7 @@
         "switchLanguageLabel": "切換語言",
         "copyrightVideo": "版權說明：影片版權歸相關網站及作者所有",
         "copyrightStorage": "本站不提供和儲存任何影片及圖片",
-        "copyrightYear": "Copyright © 2025",
+        "copyrightYear": "Copyright © {year}",
         "copyrightBilibiliRestriction": "⚠️ 不支援下載版權受限（如會員專享、付費）或平台存取受限（如 Telegram / X 限制級、需登入或受限內容）的影片。"
     },
     "form": {

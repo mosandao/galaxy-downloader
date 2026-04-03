@@ -20,7 +20,7 @@
         "switchLanguageLabel": "Switch language",
         "copyrightVideo": "Copyright Notice: Video copyrights belong to relevant websites and authors",
         "copyrightStorage": "This site does not provide or store any videos or images",
-        "copyrightYear": "Copyright © 2025",
+        "copyrightYear": "Copyright © {year}",
         "copyrightBilibiliRestriction": "⚠️ Downloading copyright-restricted videos (such as member-exclusive or paid content) or access-restricted platform content (such as restricted, login-required, or otherwise limited Telegram / X content) is not supported."
     },
     "form": {

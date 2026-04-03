@@ -16,6 +16,7 @@ export default async function HomePage({
 }) {
     const { locale } = await params
     const dict = await getMessages({ locale }) as Dictionary
+    const currentYear = new Date().getFullYear()
 
     return (
         <>
@@ -71,7 +72,7 @@ export default async function HomePage({
                                 </p>
                                 <p>{dict.page.copyrightVideo}</p>
                                 <p>{dict.page.copyrightStorage}</p>
-                                <p>{dict.page.copyrightYear}</p>
+                                <p>{dict.page.copyrightYear.replace('{year}', String(currentYear))}</p>
                             </div>
                         </div>
                     </footer>

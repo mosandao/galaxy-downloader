@@ -20,7 +20,7 @@
         "switchLanguageLabel": "言語を切り替える",
         "copyrightVideo": "著作権に関するご注意: 動画の著作権は各サイトおよび投稿者に帰属します",
         "copyrightStorage": "本サイトは動画や画像を保存または提供していません",
-        "copyrightYear": "Copyright © 2025",
+        "copyrightYear": "Copyright © {year}",
         "copyrightBilibiliRestriction": "⚠️ 著作権保護された動画（会員限定・有料コンテンツなど）や、プラットフォーム側でアクセス制限された動画（Telegram / X の制限級・ログイン必須・その他の制限コンテンツなど）のダウンロードには対応していません。"
     },
     "form": {
