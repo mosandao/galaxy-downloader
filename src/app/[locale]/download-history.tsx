@@ -131,7 +131,7 @@ export function DownloadHistory({
                 </CardHeader>
                 <CollapsibleContent className="flex-1 min-h-0 flex flex-col">
                     <CardContent className="flex-1 min-h-0 p-0 flex flex-col">
-                        <ScrollArea className="h-full flex-1">
+                        <ScrollArea className="h-[40dvh] md:h-[55dvh]">
                             <div className="px-4 md:px-6 pb-4 md:pb-6">
                                 {filteredHistory.length === 0 ? (
                                     <p className="py-6 text-center text-sm text-muted-foreground">

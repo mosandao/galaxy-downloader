@@ -67,7 +67,11 @@ export function UnifiedDownloader({
     const { canPrompt, promptInstall, dismiss } = useInstallPrompt();
     const hasPromptedInstall = useRef(false);
     const addToHistory = (record: DownloadRecord) => {
-        setDownloadHistory(prev => [record, ...(prev || []).slice(0, DOWNLOAD_HISTORY_MAX_COUNT - 1)]);
+        const normalizedUrl = record.url.trim();
+        setDownloadHistory(prev => [
+            record,
+            ...(prev || []).filter((item) => item.url.trim() !== normalizedUrl)
+        ].slice(0, DOWNLOAD_HISTORY_MAX_COUNT));
     };
 
     const clearDownloadHistory = () => {

@@ -67,7 +67,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vinext": "^0.0.39",
-    "vite": "^8.0.5",
+    "vite": "^8.0.6",
     "vitest": "^3.2.4",
     "wrangler": "4.80.0"
   },
