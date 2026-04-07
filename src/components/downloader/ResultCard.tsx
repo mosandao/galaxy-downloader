@@ -6,9 +6,8 @@ import { useDictionary } from '@/i18n/client';
 import type { AudioExtractTask } from '@/components/audio-tool/types';
 import { UnifiedParseResult, PageInfo, EmbeddedVideoInfo } from "../../lib/types";
 import { downloadFile, formatDuration, sanitizeFilename } from "../../lib/utils";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/lib/deferred-toast';
-import { normalizePlatform } from "@/lib/platforms";
 import {
     getResultMediaActions,
     shouldHideSingleImagePreview,
@@ -50,6 +49,67 @@ function triggerBlobDownload(blob: Blob, filename: string) {
     }, 1000);
 }
 
+function dedupeUrls(urls: string[]): string[] {
+    return Array.from(new Set(urls.filter((value) => value.length > 0)));
+}
+
+function resolveImageDownloadExtension(sourceUrl: string, contentType: string | null | undefined): string {
+    const normalizedContentType = contentType?.split(';')[0]?.trim().toLowerCase() ?? '';
+    const contentTypeMap: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+        'image/svg+xml': 'svg',
+        'image/avif': 'avif',
+    };
+
+    const mappedExtension = contentTypeMap[normalizedContentType];
+    if (mappedExtension) {
+        return mappedExtension;
+    }
+
+    try {
+        const pathname = new URL(sourceUrl).pathname;
+        const match = pathname.match(/\.([a-z0-9]+)$/i);
+        if (match?.[1]) {
+            return match[1].toLowerCase();
+        }
+    } catch {
+        // Ignore invalid urls and fall back to jpg.
+    }
+
+    return 'jpg';
+}
+
+type ResolvedImageFetchResult = {
+    blob: Blob;
+    sourceUrl: string;
+};
+
+async function fetchImageBlobCandidates(candidates: string[]): Promise<ResolvedImageFetchResult> {
+    let lastError: unknown = null;
+
+    for (const candidate of dedupeUrls(candidates)) {
+        try {
+            const response = await fetch(candidate);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return {
+                blob: await response.blob(),
+                sourceUrl: candidate,
+            };
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError ?? new Error('Failed to fetch image');
+}
+
 export function ResultCard({ result, onClose, onOpenExtractAudio }: ResultCardProps) {
     const dict = useDictionary()
     if (!result) return null;
@@ -88,7 +148,6 @@ export function ResultCard({ result, onClose, onOpenExtractAudio }: ResultCardPr
                         <ImageNoteGrid
                             images={[coverSrc]}
                             title={displayTitle}
-                            platform={result.platform}
                             singleImageMode
                         />
                     )}
@@ -96,7 +155,6 @@ export function ResultCard({ result, onClose, onOpenExtractAudio }: ResultCardPr
                         <ImageNoteGrid
                             images={result.images!}
                             title={displayTitle}
-                            platform={result.platform}
                         />
                     ) : (
                         <>
@@ -114,7 +172,6 @@ export function ResultCard({ result, onClose, onOpenExtractAudio }: ResultCardPr
                                 <ImageNoteGrid
                                     images={result.images!}
                                     title={displayTitle}
-                                    platform={result.platform}
                                 />
                             )}
                         </>
@@ -423,147 +480,85 @@ function EmbeddedVideoList({ videos }: { videos: EmbeddedVideoInfo[] }) {
 function ImageNoteGrid({
     images,
     title,
-    platform,
     singleImageMode = false,
 }: {
     images: string[];
     title: string;
-    platform: string;
     singleImageMode?: boolean;
 }) {
     const dict = useDictionary()
-    // 合并的状态类型
     type ImageLoadState = {
         loading: boolean;
         error: boolean;
-        blobUrl: string | null;
+        src: string;
+        usedFallback: boolean;
     };
-
-    const [imageStates, setImageStates] = useState<Map<number, ImageLoadState>>(new Map());
+    const [imageStates, setImageStates] = useState<ImageLoadState[]>(() => (
+        images.map((imageUrl) => ({
+            loading: true,
+            error: false,
+            src: resolveImageSrc(imageUrl),
+            usedFallback: false,
+        }))
+    ));
     const [isPackaging, setIsPackaging] = useState(false);
     const [packagingProgress, setPackagingProgress] = useState(0);
 
-    // 使用 ref 管理 blob URLs，避免依赖问题
-    const blobUrlsRef = useRef<Set<string>>(new Set());
-
     useEffect(() => {
-        const currentBlobUrls = new Set<string>();
-        blobUrlsRef.current = currentBlobUrls;
-        let cancelled = false;
-        let rafId: number | null = null;
+        setImageStates(images.map((imageUrl) => ({
+            loading: true,
+            error: false,
+            src: resolveImageSrc(imageUrl),
+            usedFallback: false,
+        })));
+    }, [images]);
 
-        // 初始化加载状态
-        const initialStates = new Map<number, ImageLoadState>();
-        images.forEach((_, index) => {
-            initialStates.set(index, { loading: true, error: false, blobUrl: null });
+    const updateImageState = (index: number, updater: (state: ImageLoadState) => ImageLoadState) => {
+        setImageStates((prev) => prev.map((state, currentIndex) => (
+            currentIndex === index ? updater(state) : state
+        )));
+    };
+
+    const handleImageLoad = (index: number) => {
+        updateImageState(index, (state) => ({
+            ...state,
+            loading: false,
+            error: false,
+        }));
+    };
+
+    const handleImageError = (index: number, originalUrl: string) => {
+        updateImageState(index, (state) => {
+            if (!state.usedFallback && state.src !== originalUrl) {
+                return {
+                    ...state,
+                    loading: true,
+                    error: false,
+                    src: originalUrl,
+                    usedFallback: true,
+                };
+            }
+
+            return {
+                ...state,
+                loading: false,
+                error: true,
+            };
         });
-        setImageStates(initialStates);
-        const draftStates = new Map(initialStates);
+    };
 
-        const flushStates = () => {
-            rafId = null;
-            if (cancelled) {
-                return;
-            }
-            setImageStates(new Map(draftStates));
-        };
-
-        const scheduleFlush = () => {
-            if (cancelled || rafId !== null) {
-                return;
-            }
-            rafId = window.requestAnimationFrame(flushStates);
-        };
-
-        // 获取所有图片
-        const fetchImages = async () => {
-            await Promise.all(
-                images.map(async (imageUrl, index) => {
-                    const resolvedImageUrl = resolveImageSrc(imageUrl);
-                    try {
-                        const referrerMap: Record<string, string> = {
-                            xiaohongshu: 'https://www.xiaohongshu.com/',
-                            douyin: 'https://www.douyin.com/',
-                            instagram: 'https://www.instagram.com/',
-                            x: 'https://x.com/',
-                        };
-                        const referrer = referrerMap[normalizePlatform(platform)];
-                        const shouldUseCustomReferrer =
-                            !!referrer &&
-                            resolvedImageUrl === imageUrl &&
-                            (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'));
-
-                        const response = await fetch(resolvedImageUrl, shouldUseCustomReferrer ? { referrer } : undefined);
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        const blob = await response.blob();
-                        const blobUrl = URL.createObjectURL(blob);
-
-                        // 存储到 ref 用于清理
-                        currentBlobUrls.add(blobUrl);
-
-                        draftStates.set(index, { loading: false, error: false, blobUrl });
-                        scheduleFlush();
-                    } catch (error) {
-                        console.error(`Failed to load image ${index}:`, error);
-                        if (resolvedImageUrl !== imageUrl) {
-                            try {
-                                const response = await fetch(imageUrl);
-                                if (!response.ok) {
-                                    throw new Error(`HTTP ${response.status}`);
-                                }
-                                const blob = await response.blob();
-                                const blobUrl = URL.createObjectURL(blob);
-
-                                currentBlobUrls.add(blobUrl);
-
-                                draftStates.set(index, { loading: false, error: false, blobUrl });
-                                scheduleFlush();
-                                return;
-                            } catch (fallbackError) {
-                                console.error(`Fallback image load failed ${index}:`, fallbackError);
-                            }
-                        }
-                        draftStates.set(index, { loading: false, error: true, blobUrl: null });
-                        scheduleFlush();
-                    }
-                })
-            );
-
-            if (cancelled) {
-                return;
-            }
-            if (rafId !== null) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            }
-            setImageStates(new Map(draftStates));
-        };
-
-        void fetchImages();
-
-        // 清理函数：释放所有 blob URLs
-        return () => {
-            cancelled = true;
-            if (rafId !== null) {
-                cancelAnimationFrame(rafId);
-            }
-            currentBlobUrls.forEach(blobUrl => {
-                URL.revokeObjectURL(blobUrl);
-            });
-            currentBlobUrls.clear();
-        };
-    }, [images, platform]);
-
-    const handleDownload = (index: number, originalUrl: string) => {
-        const state = imageStates.get(index);
-        if (state?.blobUrl) {
-            // 如果有 blob，直接下载
-            downloadFile(state.blobUrl, `${sanitizeFilename(title)}-${index + 1}.jpg`);
-        } else {
-            // 否则在新标签打开原始 URL
-            window.open(originalUrl, '_blank');
+    const handleDownload = async (index: number, originalUrl: string) => {
+        try {
+            const state = imageStates[index];
+            const { blob, sourceUrl } = await fetchImageBlobCandidates([
+                state?.src ?? resolveImageSrc(originalUrl),
+                originalUrl,
+            ]);
+            const extension = resolveImageDownloadExtension(sourceUrl, blob.type);
+            triggerBlobDownload(blob, `${sanitizeFilename(title)}-${index + 1}.${extension}`);
+        } catch (error) {
+            console.error(`Failed to download image ${index}:`, error);
+            toast.error(dict.errors.downloadError);
         }
     };
 
@@ -575,27 +570,24 @@ function ImageNoteGrid({
             const { default: JSZip } = await import('jszip');
             const zip = new JSZip();
             let successCount = 0;
-            let failCount = 0;
 
             // 遍历所有图片，添加到 zip
             for (let index = 0; index < images.length; index++) {
-                const state = imageStates.get(index);
-                const blobUrl = state?.blobUrl;
-                const hasError = state?.error;
+                const state = imageStates[index];
+                const hasError = state?.error ?? false;
 
-                if (blobUrl && !hasError) {
+                if (!hasError) {
                     try {
-                        // 从 blob URL 获取实际的 blob 数据
-                        const response = await fetch(blobUrl);
-                        const blob = await response.blob();
-                        zip.file(`${sanitizeFilename(title)}-${index + 1}.jpg`, blob);
+                        const { blob, sourceUrl } = await fetchImageBlobCandidates([
+                            state?.src ?? resolveImageSrc(images[index]!),
+                            images[index]!,
+                        ]);
+                        const extension = resolveImageDownloadExtension(sourceUrl, blob.type);
+                        zip.file(`${sanitizeFilename(title)}-${index + 1}.${extension}`, blob);
                         successCount++;
                     } catch (error) {
                         console.error(`Failed to add image ${index} to zip:`, error);
-                        failCount++;
                     }
-                } else {
-                    failCount++;
                 }
 
                 // 更新进度
@@ -622,10 +614,10 @@ function ImageNoteGrid({
     };
 
     // 计算加载完成的数量和成功数量
-    const loadedCount = Array.from(imageStates.values()).filter(state => !state.loading).length;
+    const loadedCount = imageStates.filter((state) => !state.loading).length;
     const allLoaded = loadedCount === images.length;
-    const successCount = Array.from(imageStates.values()).filter(state => !state.error && state.blobUrl).length;
-    const singleImageState = singleImageMode ? imageStates.get(0) : undefined;
+    const successCount = imageStates.filter((state) => !state.error).length;
+    const singleImageState = singleImageMode ? imageStates[0] : undefined;
     const shouldHideSingleImage = shouldHideSingleImagePreview(singleImageMode, singleImageState);
 
     if (shouldHideSingleImage) {
@@ -672,10 +664,10 @@ function ImageNoteGrid({
             )}
             <div className={`${singleImageMode ? 'grid grid-cols-1' : 'grid grid-cols-2'} gap-3 max-h-[500px] overflow-y-auto pr-1`}>
                 {images.map((imageUrl, index) => {
-                    const state = imageStates.get(index);
+                    const state = imageStates[index];
                     const isLoading = state?.loading ?? true;
                     const hasError = state?.error ?? false;
-                    const blobUrl = state?.blobUrl ?? null;
+                    const displaySrc = state?.src ?? resolveImageSrc(imageUrl);
 
                     return (
                         <div
@@ -700,9 +692,9 @@ function ImageNoteGrid({
                                         <p className="text-[10px] mt-1 opacity-60">{dict.result.loadFailed}</p>
                                     </div>
                                 )}
-                                {!isLoading && !hasError && blobUrl && (
+                                {!isLoading && !hasError && (
                                     <Image
-                                        src={blobUrl}
+                                        src={displaySrc}
                                         alt={
                                             singleImageMode
                                                 ? (title || dict.result.coverLabel)
@@ -712,6 +704,8 @@ function ImageNoteGrid({
                                         unoptimized
                                         sizes={singleImageMode ? '(max-width: 1024px) 100vw, 720px' : '(max-width: 768px) 50vw, 33vw'}
                                         className="object-cover"
+                                        onLoad={() => handleImageLoad(index)}
+                                        onError={() => handleImageError(index, imageUrl)}
                                     />
                                 )}
                             </div>
@@ -721,8 +715,8 @@ function ImageNoteGrid({
                                         size="sm"
                                         variant="secondary"
                                         className="h-8 w-8 p-0 shadow-md"
-                                        onClick={() => handleDownload(index, imageUrl)}
-                                        title={blobUrl ? dict.result.downloadImage : dict.result.viewLargeImage}
+                                        onClick={() => void handleDownload(index, imageUrl)}
+                                        title={dict.result.downloadImage}
                                     >
                                         <Download className="h-4 w-4" />
                                     </Button>

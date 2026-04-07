@@ -8,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { toast } from '@/lib/deferred-toast';
 import { Loader2, Github, History, Link2, Music } from 'lucide-react';
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { DeferredLanguageSwitcher } from "@/components/deferred-language-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { FeedbackDialog } from '@/components/feedback-dialog';
-import { ChangelogDialog } from '@/components/changelog-dialog';
-import { AudioExtractDialog } from '@/components/audio-extract-dialog';
+import { DeferredFeedbackDialog } from '@/components/deferred-feedback-dialog';
+import { DeferredChangelogDialog } from '@/components/deferred-changelog-dialog';
+import { DeferredAudioExtractDialog } from '@/components/deferred-audio-extract-dialog';
 import type { AudioExtractTask } from '@/components/audio-tool/types';
-import { MobileNavMenu } from '@/components/mobile-nav-menu';
+import { DeferredMobileNavMenu } from '@/components/deferred-mobile-nav-menu';
 
 import type { DownloadRecord } from './download-history';
 import { useLocalStorageState } from '@/hooks/use-local-storage-state';
@@ -53,6 +53,7 @@ export function UnifiedDownloader({
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [audioToolMounted, setAudioToolMounted] = useState(false);
     const [audioToolOpen, setAudioToolOpen] = useState(false);
     const [audioToolEntry, setAudioToolEntry] = useState<'toolbar' | 'result'>('toolbar');
     const [audioToolTask, setAudioToolTask] = useState<AudioExtractTask | null>(null);
@@ -74,12 +75,14 @@ export function UnifiedDownloader({
     };
 
     const openToolbarAudioTool = () => {
+        setAudioToolMounted(true);
         setAudioToolEntry('toolbar');
         setAudioToolTask(null);
         setAudioToolOpen(true);
     };
 
     const openResultAudioExtract = (task: AudioExtractTask) => {
+        setAudioToolMounted(true);
         setAudioToolEntry('result');
         setAudioToolTask(task);
         setAudioToolOpen(true);
@@ -249,9 +252,9 @@ export function UnifiedDownloader({
                         </Button>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                        <FeedbackDialog triggerIconOnly triggerClassName="h-8 w-8" />
-                        <LanguageSwitcher iconOnly />
-                        <MobileNavMenu />
+                        <DeferredFeedbackDialog triggerIconOnly triggerClassName="h-8 w-8" />
+                        <DeferredLanguageSwitcher iconOnly />
+                        <DeferredMobileNavMenu />
                     </div>
                 </div>
                 <div className="hidden md:flex max-w-7xl mx-auto px-3 sm:px-4 md:px-5 py-3 justify-end items-center gap-1">
@@ -270,14 +273,15 @@ export function UnifiedDownloader({
                         <Music className="h-4 w-4" />
                         <span>{dict.audioTool.triggerButton}</span>
                     </Button>
-                    <FeedbackDialog />
-                    <ChangelogDialog />
+                    <DeferredFeedbackDialog />
+                    <DeferredChangelogDialog />
                     <ThemeSwitcher />
-                    <LanguageSwitcher />
+                    <DeferredLanguageSwitcher />
                 </div>
             </div>
 
-            <AudioExtractDialog
+            <DeferredAudioExtractDialog
+                mounted={audioToolMounted}
                 open={audioToolOpen}
                 onOpenChange={(nextOpen) => {
                     setAudioToolOpen(nextOpen);
