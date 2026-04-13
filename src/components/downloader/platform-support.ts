@@ -37,6 +37,8 @@ export type PlatformSupportItem = {
     visual: PlatformSupportVisual;
 };
 
+const HIDDEN_PLATFORM_SUPPORT_KEYS = new Set<PlatformSupportKey>(['youtube']);
+
 const PLATFORM_SUPPORT_VISUALS: Record<PlatformSupportKey, PlatformSupportVisual> = {
     bilibili: {
         src: '/platform-icons/bilibili.svg',
@@ -139,5 +141,5 @@ export function getPlatformSupportItems(dict: Pick<Dictionary, 'guide'>): Platfo
         buildPlatformSupportItem('tiktok', support.tiktok),
         buildPlatformSupportItem('instagram', support.instagram),
         buildPlatformSupportItem('x', support.x),
-    ];
+    ].filter((item) => !HIDDEN_PLATFORM_SUPPORT_KEYS.has(item.key));
 }
