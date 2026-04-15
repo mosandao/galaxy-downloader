@@ -22,6 +22,11 @@ export const douyinParser: PlatformParser = {
     async parse(ctx: ParseContext): Promise<ParserResult> {
         const { url } = ctx
 
+        // 检查是否是用户主页链接
+        if (url.includes('showSubTab=') || (url.includes('/user/') && !url.includes('modal_id='))) {
+            return parseUserHomepage(url)
+        }
+
         // 1. 提取视频 ID
         const videoId = extractDouyinVideoId(url)
         if (!videoId) {
@@ -350,4 +355,191 @@ async function tryPublicParser(videoId: string): Promise<DouyinVideoInfo | null>
 
     // 暂时跳过公开服务，避免依赖不稳定的外部服务
     return null
+}
+
+/**
+ * 解析用户主页（批量获取视频）
+ */
+async function parseUserHomepage(url: string): Promise<ParserResult> {
+    console.log(`[抖音] 用户主页模式`)
+    console.log(`[抖音] 正在获取用户视频列表...`)
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'zh-CN,zh;q=0.9',
+                'Referer': 'https://www.douyin.com/',
+                'Cookie': 'ttwid=1', // 基础 cookie
+            },
+            signal: AbortSignal.timeout(20000),
+        })
+
+        if (!response.ok) {
+            return {
+                success: false,
+                error: `HTTP ${response.status}`,
+                code: 'UPSTREAM_ERROR',
+            }
+        }
+
+        const html = await response.text()
+        console.log(`[抖音] 主页 HTML 长度: ${html.length}`)
+
+        // 检测是否是 JS 混淆页面
+        if (html.includes('_$jsvmprt') || html.includes('<body></body>')) {
+            return {
+                success: false,
+                error: '抖音用户主页使用了 JS 混淆技术，需要浏览器环境。\n建议：直接下载单个视频，或使用网页版手动操作。',
+                code: 'PARSE_FAILED',
+            }
+        }
+
+        // 提取所有 modal_id
+        const modalIds = extractModalIdsFromHtml(html)
+
+        if (modalIds.length === 0) {
+            return {
+                success: false,
+                error: '未找到视频，可能需要登录或主页为空',
+                code: 'PARSE_FAILED',
+            }
+        }
+
+        console.log(`[抖音] 找到 ${modalIds.length} 个视频`)
+
+        // 提取用户名
+        const userNameMatch = html.match(/nickname["']?\s*[:=]\s*["']([^"']+)["']/)
+        const userName = userNameMatch ? userNameMatch[1] : '抖音用户'
+
+        // 构造批量下载结果
+        const videos: Array<{
+            modalId: string
+            title: string
+            cover: string
+        }> = []
+
+        for (let i = 0; i < Math.min(modalIds.length, 50); i++) { // 限制最多 50 个
+            const modalId = modalIds[i]
+
+            // 尝试从 HTML 中提取该视频的基本信息
+            const titlePattern = new RegExp(`modal_id["']?\\s*[:=]\\s*["']?${modalId}["']?[^}]*desc["']?\\s*[:=]\\s*["']([^"']+)["']`, 'i')
+            const titleMatch = html.match(titlePattern)
+            const title = titleMatch ? titleMatch[1] : `视频 ${i + 1}`
+
+            const coverPattern = new RegExp(`modal_id["']?\\s*[:=]\\s*["']?${modalId}["']?[^}]*cover["']?\\s*[:=]\\s*["']([^"']+)["']`, 'i')
+            const coverMatch = html.match(coverPattern)
+            const cover = coverMatch ? coverMatch[1].replace(/\\u002F/g, '/') : ''
+
+            videos.push({
+                modalId,
+                title,
+                cover,
+            })
+        }
+
+        // 返回批量结果
+        const result: NonNullable<UnifiedParseResult['data']> = {
+            title: `${userName} 的视频合集 (${videos.length} 个)`,
+            desc: `共 ${modalIds.length} 个视频，已获取 ${videos.length} 个`,
+            cover: videos[0]?.cover || '',
+            platform: 'douyin',
+            url: url,
+            duration: 0,
+            downloadVideoUrl: null,
+            downloadAudioUrl: null,
+            originDownloadVideoUrl: null,
+            originDownloadAudioUrl: null,
+            mediaActions: {
+                video: 'direct-download',
+                audio: 'extract-audio',
+            },
+            noteType: 'video',
+            isMultiPart: true,
+            pages: videos.map((v, i) => ({
+                page: i + 1,
+                cid: v.modalId,
+                part: v.title,
+                duration: 0,
+                downloadVideoUrl: `https://www.douyin.com/video/${v.modalId}`,
+                downloadAudioUrl: null,
+            })),
+        }
+
+        return {
+            success: true,
+            data: result,
+        }
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : '获取用户主页失败',
+            code: 'UPSTREAM_ERROR',
+        }
+    }
+}
+
+/**
+ * 从 HTML 中提取所有 modal_id
+ */
+function extractModalIdsFromHtml(html: string): string[] {
+    const ids: Set<string> = new Set()
+
+    // 方法 1: 直接匹配 modal_id
+    const modalMatches = html.matchAll(/modal_id["']?\s*[:=]\s*["']?(\d{15,20})["']?/g)
+    for (const match of modalMatches) {
+        if (match[1]) ids.add(match[1])
+    }
+
+    // 方法 2: 匹配 aweme_id
+    const awemeMatches = html.matchAll(/aweme_id["']?\s*[:=]\s*["']?(\d{15,20})["']?/g)
+    for (const match of awemeMatches) {
+        if (match[1]) ids.add(match[1])
+    }
+
+    // 方法 3: 匹配视频链接
+    const videoUrlMatches = html.matchAll(/douyin\.com\/video\/(\d+)/g)
+    for (const match of videoUrlMatches) {
+        if (match[1]) ids.add(match[1])
+    }
+
+    // 方法 4: 从 JSON 数据中提取
+    const jsonMatch = html.match(/window\._ROUTER_DATA\s*=\s*(\{.+?\})\s*<\/script>/s)
+    if (jsonMatch) {
+        try {
+            const jsonStr = jsonMatch[1].replace(/\\u002F/g, '/')
+            const routerData = JSON.parse(jsonStr)
+
+            // 遍历 loaderData 查找视频列表
+            const loaderData = routerData?.loaderData || {}
+            for (const key of Object.keys(loaderData)) {
+                const data = loaderData[key]
+
+                // 用户主页的视频列表
+                if (data?.postList || data?.videoList || data?.awemeList) {
+                    const list = data.postList || data.videoList || data.awemeList || []
+                    for (const item of list) {
+                        const id = item?.aweme_id || item?.awemeId || item?.modal_id || item?.id
+                        if (id && /^\d{15,20}$/.test(String(id))) {
+                            ids.add(String(id))
+                        }
+                    }
+                }
+
+                // 单个视频信息
+                if (data?.awemeDetail || data?.aweme_detail) {
+                    const detail = data.awemeDetail || data.aweme_detail
+                    const id = detail?.aweme_id || detail?.awemeId
+                    if (id && /^\d{15,20}$/.test(String(id))) {
+                        ids.add(String(id))
+                    }
+                }
+            }
+        } catch {
+            // JSON 解析失败
+        }
+    }
+
+    return Array.from(ids)
 }

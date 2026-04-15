@@ -52,7 +52,7 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
 
         const files: Array<{ path: string; size: number; type: 'video' | 'audio' | 'image' }> = []
 
-        // 处理多P视频
+        // 处理多P视频 / 用户主页批量下载
         if (data.isMultiPart && data.pages?.length) {
             if (part && part > 0) {
                 const targetPage = data.pages.find(p => p.page === part)
@@ -66,38 +66,77 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
 
                 console.log(`\n[下载] P${part}: ${targetPage.part}`)
 
-                if (type === 'video' || type === 'auto') {
-                    const videoUrl = targetPage.downloadVideoUrl
-                    if (videoUrl) {
+                // 检查是否是 URL 需要二次解析
+                const videoUrl = targetPage.downloadVideoUrl
+                if (videoUrl && videoUrl.startsWith('http')) {
+                    if (videoUrl.includes('douyin.com/video/') || videoUrl.includes('douyin.com/note/')) {
+                        // 需要二次解析
+                        console.log(`[解析] 正在解析单个视频...`)
+                        const singleData = await parseMediaUrl(videoUrl)
+                        const actualVideoUrl = singleData.downloadVideoUrl || singleData.originDownloadVideoUrl
+                        if (actualVideoUrl) {
+                            const result = await downloadWithType(actualVideoUrl, output, baseName + `-P${part}`, 'video', platform)
+                            if (result.success) {
+                                files.push({ path: result.path, size: result.size, type: 'video' })
+                            }
+                        }
+                    } else {
+                        // 直接下载
                         const result = await downloadWithType(videoUrl, output, baseName + `-P${part}`, 'video', platform)
                         if (result.success) {
                             files.push({ path: result.path, size: result.size, type: 'video' })
                         }
                     }
                 }
-
-                if (type === 'audio' || type === 'auto') {
-                    const audioUrl = targetPage.downloadAudioUrl
-                    if (audioUrl) {
-                        const result = await downloadWithType(audioUrl, output, baseName + `-P${part}`, 'audio', platform)
-                        if (result.success) {
-                            files.push({ path: result.path, size: result.size, type: 'audio' })
-                        }
-                    }
-                }
             } else {
                 console.log(`\n[下载] 共 ${data.pages.length} 个分P`)
+
+                // 判断是否是用户主页批量模式（downloadVideoUrl 是视频链接而非下载链接）
+                const isBatchMode = data.pages[0]?.downloadVideoUrl?.includes('douyin.com/video/')
+
+                if (isBatchMode) {
+                    console.log(`[提示] 批量下载模式，逐个解析视频...`)
+                }
+
                 for (const page of data.pages) {
                     console.log(`\n[P${page.page}] ${page.part}`)
 
                     if (type === 'video' || type === 'auto') {
                         const videoUrl = page.downloadVideoUrl
-                        if (videoUrl) {
-                            const result = await downloadWithType(videoUrl, output, baseName + `-P${page.page}`, 'video', platform)
-                            if (result.success) {
-                                files.push({ path: result.path, size: result.size, type: 'video' })
+
+                        if (videoUrl && videoUrl.startsWith('http')) {
+                            // 判断是否需要二次解析
+                            if (videoUrl.includes('douyin.com/video/') || videoUrl.includes('douyin.com/note/')) {
+                                try {
+                                    console.log(`  [解析] 正在解析视频 ${page.page}/${data.pages.length}...`)
+                                    const singleData = await parseMediaUrl(videoUrl)
+                                    const actualVideoUrl = singleData.downloadVideoUrl || singleData.originDownloadVideoUrl
+
+                                    if (actualVideoUrl) {
+                                        const videoBaseName = sanitizeFilename(singleData.title || `${baseName}-P${page.page}`)
+                                        const result = await downloadWithType(actualVideoUrl, output, videoBaseName, 'video', platform)
+                                        if (result.success) {
+                                            files.push({ path: result.path, size: result.size, type: 'video' })
+                                        }
+                                    } else {
+                                        console.log(`  [跳过] 未找到下载链接`)
+                                    }
+                                } catch (e) {
+                                    console.log(`  [失败] ${getErrorMessage(e)}`)
+                                }
+                            } else {
+                                // 直接下载
+                                const result = await downloadWithType(videoUrl, output, baseName + `-P${page.page}`, 'video', platform)
+                                if (result.success) {
+                                    files.push({ path: result.path, size: result.size, type: 'video' })
+                                }
                             }
                         }
+                    }
+
+                    // 间隔避免请求过快
+                    if (isBatchMode && page.page < data.pages.length) {
+                        await new Promise(resolve => setTimeout(resolve, 500))
                     }
                 }
             }
