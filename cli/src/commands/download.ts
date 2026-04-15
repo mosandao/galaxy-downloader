@@ -10,6 +10,7 @@ export interface DownloadOptions {
     type: 'video' | 'audio' | 'images' | 'auto'
     output: string
     part?: number
+    browser?: boolean
     json?: boolean
 }
 

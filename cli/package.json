@@ -27,6 +27,11 @@
   "dependencies": {
     "commander": "^12.1.0"
   },
+  "optionalDependencies": {
+    "puppeteer-core": "^22.15.0",
+    "puppeteer-extra": "^2.1.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
   "devDependencies": {
     "@types/node": "^20.19.39",
     "typescript": "^5.9.3"

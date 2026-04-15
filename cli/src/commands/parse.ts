@@ -7,6 +7,7 @@ import type { CanonicalPlatform } from '../types.js'
 
 export interface ParseOptions {
     url: string
+    browser?: boolean
 }
 
 export interface ParseResult {
@@ -27,13 +28,18 @@ export interface ParseResult {
  * 解析并显示媒体信息
  */
 export async function parseCommand(options: ParseOptions): Promise<ParseResult> {
-    const { url } = options
+    const { url, browser } = options
 
     if (!url.trim()) {
         return {
             success: false,
             error: 'URL 不能为空',
         }
+    }
+
+    // 设置浏览器模式
+    if (browser) {
+        process.env.GALAXY_BROWSER_MODE = 'true'
     }
 
     console.log(`\n[解析] 正在解析: ${url}`)

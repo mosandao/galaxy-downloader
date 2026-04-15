@@ -9,6 +9,7 @@
 
 import type { PlatformParser, ParseContext, ParserResult } from './index.js'
 import type { CanonicalPlatform, UnifiedParseResult } from '../types.js'
+import { parseDouyinUserHomepageWithBrowser } from './browser.js'
 
 export const douyinParser: PlatformParser = {
     name: 'douyin',
@@ -24,6 +25,14 @@ export const douyinParser: PlatformParser = {
 
         // 检查是否是用户主页链接
         if (url.includes('showSubTab=') || (url.includes('/user/') && !url.includes('modal_id='))) {
+            // 检查是否启用浏览器模式
+            const browserMode = process.env.GALAXY_BROWSER_MODE === 'true'
+
+            if (browserMode) {
+                console.log('[抖音] 使用浏览器模式解析用户主页')
+                return parseDouyinUserHomepageWithBrowser(url)
+            }
+
             return parseUserHomepage(url)
         }
 
@@ -391,7 +400,7 @@ async function parseUserHomepage(url: string): Promise<ParserResult> {
         if (html.includes('_$jsvmprt') || html.includes('<body></body>')) {
             return {
                 success: false,
-                error: '抖音用户主页使用了 JS 混淆技术，需要浏览器环境。\n建议：直接下载单个视频，或使用网页版手动操作。',
+                error: '抖音用户主页使用了 JS 混淆技术，需要浏览器环境。\n\n解决方案：\n1. 使用 --browser 参数启用浏览器模式\n2. 或直接下载单个视频链接\n\n提示：浏览器模式需要安装 puppeteer-core',
                 code: 'PARSE_FAILED',
             }
         }
@@ -402,7 +411,7 @@ async function parseUserHomepage(url: string): Promise<ParserResult> {
         if (modalIds.length === 0) {
             return {
                 success: false,
-                error: '未找到视频，可能需要登录或主页为空',
+                error: '未找到视频。建议使用 --browser 参数启用浏览器模式，或直接下载单个视频链接。',
                 code: 'PARSE_FAILED',
             }
         }

@@ -19,6 +19,7 @@ program
     .option('-t, --type <type>', '下载类型: video, audio, images, auto (默认: auto)', 'auto')
     .option('-o, --output <dir>', '输出目录 (默认: ./downloads)', './downloads')
     .option('-p, --part <num>', '多P视频指定分P下载')
+    .option('--browser', '使用浏览器模式（用于抖音用户主页批量下载）')
     .option('--json', '输出 JSON 格式结果')
     .option('--api-base <url>', '上游 API 地址')
     .action(async (url: string, options) => {
@@ -27,11 +28,17 @@ program
             process.env.GALAXY_API_BASE_URL = options.apiBase
         }
 
+        // 设置浏览器模式
+        if (options.browser) {
+            process.env.GALAXY_BROWSER_MODE = 'true'
+        }
+
         const result = await downloadCommand({
             url,
             type: options.type as 'video' | 'audio' | 'images' | 'auto',
             output: options.output,
             part: options.part ? parseInt(options.part, 10) : undefined,
+            browser: options.browser,
             json: options.json,
         })
 
@@ -44,15 +51,21 @@ program
 
 // 子命令：仅解析信息
 program
-    .command('parse <url>')
+    .command('parse')
+    .argument('<url>', '媒体链接')
     .description('解析媒体信息（不下载）')
+    .option('--browser [flag]', '使用浏览器模式（用于抖音用户主页）', 'false')
     .option('--api-base <url>', '上游 API 地址')
-    .action(async (url: string, options) => {
+    .action(async (url: string, options: any) => {
         if (options.apiBase) {
             process.env.GALAXY_API_BASE_URL = options.apiBase
         }
 
-        const result = await parseCommand({ url })
+        if (options.browser) {
+            process.env.GALAXY_BROWSER_MODE = 'true'
+        }
+
+        const result = await parseCommand({ url, browser: options.browser })
         process.exit(result.success ? 0 : 1)
     })
 
