@@ -3,6 +3,7 @@
 import { Command } from 'commander'
 import { parseCommand } from './commands/parse.js'
 import { downloadCommand } from './commands/download.js'
+import { transcribeCommand } from './commands/transcribe.js'
 import { getApiBaseUrl } from './api/client.js'
 import { normalizePlatform, getPlatformDisplayName } from './platforms.js'
 
@@ -114,6 +115,30 @@ program
         console.log('  export GALAXY_API_BASE_URL=http://your-api-server:8080')
         console.log('  或使用 --api-base 参数')
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+    })
+
+// 子命令：音频转录
+program
+    .command('transcribe')
+    .argument('<input>', '音频文件或目录路径')
+    .description('将音频转录为文本（使用 Whisper 模型）')
+    .option('--outdir <dir>', '输出目录 (默认: ./transcripts)', './transcripts')
+    .option('-m, --model <path>', 'Whisper 模型路径 (默认: ~/.omlx/models/whisper-large-v3-turbo)')
+    .option('-l, --language <lang>', '语言代码: zh, en, ja, ko 等 (默认: zh)', 'zh')
+    .option('-f, --format <format>', '输出格式: txt, srt, vtt, json (默认: txt)', 'txt')
+    .option('--api <url>', '使用 API 服务转录（如 http://localhost:8000）')
+    .option('--api-key <key>', 'API 服务密钥')
+    .action(async (input: string, options: any) => {
+        const result = await transcribeCommand({
+            input,
+            output: options.outdir,
+            model: options.model,
+            language: options.language,
+            format: options.format as 'txt' | 'srt' | 'vtt' | 'json',
+            api: options.api,
+            apiKey: options.apiKey,
+        })
+        process.exit(result.success ? 0 : 1)
     })
 
 program.parse()

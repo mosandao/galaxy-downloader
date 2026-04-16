@@ -4,6 +4,7 @@ import { sanitizeFilename, formatBytes } from '../utils/format.js'
 import { downloadFile, downloadFiles, ensureDirectory } from '../utils/download.js'
 import { getErrorMessage } from '../api-errors.js'
 import { join } from 'path'
+import { execSync } from 'child_process'
 
 export interface DownloadOptions {
     url: string
@@ -102,31 +103,64 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
                 for (const page of data.pages) {
                     console.log(`\n[P${page.page}] ${page.part}`)
 
-                    if (type === 'video' || type === 'auto') {
-                        const videoUrl = page.downloadVideoUrl
+                    const videoUrl = page.downloadVideoUrl
 
-                        if (videoUrl && videoUrl.startsWith('http')) {
-                            // 判断是否需要二次解析
-                            if (videoUrl.includes('douyin.com/video/') || videoUrl.includes('douyin.com/note/')) {
-                                try {
-                                    console.log(`  [解析] 正在解析视频 ${page.page}/${data.pages.length}...`)
-                                    const singleData = await parseMediaUrl(videoUrl)
-                                    const actualVideoUrl = singleData.downloadVideoUrl || singleData.originDownloadVideoUrl
+                    if (videoUrl && videoUrl.startsWith('http')) {
+                        // 判断是否需要二次解析
+                        if (videoUrl.includes('douyin.com/video/') || videoUrl.includes('douyin.com/note/')) {
+                            try {
+                                console.log(`  [解析] 正在解析视频 ${page.page}/${data.pages.length}...`)
+                                const singleData = await parseMediaUrl(videoUrl)
+                                const actualVideoUrl = singleData.downloadVideoUrl || singleData.originDownloadVideoUrl
 
-                                    if (actualVideoUrl) {
-                                        const videoBaseName = sanitizeFilename(singleData.title || `${baseName}-P${page.page}`)
+                                if (actualVideoUrl) {
+                                    const videoBaseName = sanitizeFilename(singleData.title || `${baseName}-P${page.page}`)
+
+                                    // 如果是音频模式，先下载视频再提取音频
+                                    if (type === 'audio') {
+                                        const videoFile = join(output, videoBaseName + '_temp.mp4')
+                                        const audioFile = join(output, videoBaseName + '.mp3')
+
+                                        // 下载视频
+                                        const videoResult = await downloadWithType(actualVideoUrl, output, videoBaseName + '_temp', 'video', platform)
+                                        if (videoResult.success) {
+                                            // 提取音频
+                                            const audioResult = await extractAudioFromVideo(videoResult.path, audioFile)
+                                            if (audioResult.success) {
+                                                files.push({ path: audioResult.path, size: audioResult.size, type: 'audio' })
+                                                // 删除临时视频文件
+                                                const fs = await import('fs')
+                                                fs.unlinkSync(videoResult.path)
+                                            }
+                                        }
+                                    } else {
+                                        // 视频或自动模式，直接下载视频
                                         const result = await downloadWithType(actualVideoUrl, output, videoBaseName, 'video', platform)
                                         if (result.success) {
                                             files.push({ path: result.path, size: result.size, type: 'video' })
                                         }
-                                    } else {
-                                        console.log(`  [跳过] 未找到下载链接`)
                                     }
-                                } catch (e) {
-                                    console.log(`  [失败] ${getErrorMessage(e)}`)
+                                } else {
+                                    console.log(`  [跳过] 未找到下载链接`)
+                                }
+                            } catch (e) {
+                                console.log(`  [失败] ${getErrorMessage(e)}`)
+                            }
+                        } else {
+                            // 直接下载
+                            if (type === 'audio') {
+                                const videoFile = join(output, baseName + `-P${page.page}_temp.mp4`)
+                                const audioFile = join(output, baseName + `-P${page.page}.mp3`)
+                                const videoResult = await downloadWithType(videoUrl, output, baseName + `-P${page.page}_temp`, 'video', platform)
+                                if (videoResult.success) {
+                                    const audioResult = await extractAudioFromVideo(videoResult.path, audioFile)
+                                    if (audioResult.success) {
+                                        files.push({ path: audioResult.path, size: audioResult.size, type: 'audio' })
+                                        const fs = await import('fs')
+                                        fs.unlinkSync(videoResult.path)
+                                    }
                                 }
                             } else {
-                                // 直接下载
                                 const result = await downloadWithType(videoUrl, output, baseName + `-P${page.page}`, 'video', platform)
                                 if (result.success) {
                                     files.push({ path: result.path, size: result.size, type: 'video' })
@@ -237,4 +271,26 @@ async function downloadWithType(
     }
 
     return result
+}
+
+/**
+ * 从视频中提取音频（使用 ffmpeg）
+ */
+async function extractAudioFromVideo(videoPath: string, audioPath: string): Promise<{ success: boolean; path: string; size: number }> {
+    try {
+        console.log(`  [提取音频] ${videoPath} -> ${audioPath}`)
+        execSync(`ffmpeg -i "${videoPath}" -vn -acodec libmp3lame -q:a 2 "${audioPath}" -y`, {
+            stdio: 'pipe', // 不输出 ffmpeg 的详细信息
+            timeout: 30000, // 30秒超时
+        })
+
+        // 获取输出文件大小
+        const fs = await import('fs')
+        const stats = fs.statSync(audioPath)
+        console.log(`  [音频完成] ${audioPath} (${formatBytes(stats.size)})`)
+        return { success: true, path: audioPath, size: stats.size }
+    } catch (error) {
+        console.log(`  [音频提取失败] ${error instanceof Error ? error.message : 'ffmpeg error'}`)
+        return { success: false, path: audioPath, size: 0 }
+    }
 }
