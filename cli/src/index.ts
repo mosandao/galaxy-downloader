@@ -6,6 +6,7 @@ import { downloadCommand } from './commands/download.js'
 import { transcribeCommand } from './commands/transcribe.js'
 import { getApiBaseUrl } from './api/client.js'
 import { normalizePlatform, getPlatformDisplayName } from './platforms.js'
+import { queryRecords, queryByPlatform, queryByTitle } from './db.js'
 
 const program = new Command()
 
@@ -115,6 +116,42 @@ program
         console.log('  export GALAXY_API_BASE_URL=http://your-api-server:8080')
         console.log('  或使用 --api-base 参数')
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+    })
+
+// 子命令：下载历史
+program
+    .command('history')
+    .argument('[query]', '搜索关键词（按标题搜索）')
+    .option('-p, --platform <name>', '按平台筛选: bilibili, douyin, tiktok 等')
+    .option('-n, --limit <num>', '显示条数 (默认: 20)', '20')
+    .description('查看下载历史记录')
+    .action((query: string | undefined, options: any) => {
+        let records: any[]
+        if (options.platform) {
+            records = queryByPlatform(options.platform)
+        } else if (query) {
+            records = queryByTitle(query)
+        } else {
+            records = queryRecords(parseInt(options.limit, 10))
+        }
+
+        if (records.length === 0) {
+            console.log('\n暂无下载记录\n')
+            process.exit(0)
+        }
+
+        console.log('\n下载历史:')
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        records.forEach(r => {
+            console.log(`[${r.id}] ${r.title}`)
+            console.log(`    平台: ${getPlatformDisplayName(r.platform)}  |  发布: ${r.publishedAt || '未知'}  |  下载: ${r.downloadedAt}`)
+            console.log(`    文件: ${r.mediaPath || '(无)'}`)
+            console.log(`    转录: ${r.transcriptText ? '✅ 已完成' : '(未转录)'}`)
+            console.log('')
+        })
+        console.log(`共 ${records.length} 条记录`)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+        process.exit(0)
     })
 
 // 子命令：音频转录

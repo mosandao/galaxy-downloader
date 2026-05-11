@@ -3,6 +3,7 @@ import { normalizePlatform, getPlatformDisplayName } from '../platforms.js'
 import { sanitizeFilename, formatBytes } from '../utils/format.js'
 import { downloadFile, downloadFiles, ensureDirectory } from '../utils/download.js'
 import { getErrorMessage } from '../api-errors.js'
+import { insertRecord, updateMediaPath, queryByVideoUrl, queryByTitleExact } from '../db.js'
 import { join } from 'path'
 import { execSync } from 'child_process'
 
@@ -21,8 +22,14 @@ export interface DownloadResult {
         path: string
         size: number
         type: 'video' | 'audio' | 'image'
+        dbId?: number
+        title?: string
+        platform?: string
+        videoUrl?: string
+        publishedAt?: string
     }>
     error?: string
+    username?: string
 }
 
 /**
@@ -48,11 +55,13 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
         const data = await parseMediaUrl(url)
         const platform = normalizePlatform(data.platform)
         const baseName = sanitizeFilename(data.title)
+        const username = data.author || ''
+        const publishedAt = data.publishedAt || ''
 
         console.log(`\n[解析] ${data.title}`)
         console.log(`[平台] ${getPlatformDisplayName(platform)}`)
 
-        const files: Array<{ path: string; size: number; type: 'video' | 'audio' | 'image' }> = []
+        const files: Array<{ path: string; size: number; type: 'video' | 'audio' | 'image'; dbId?: number; title?: string; platform?: string; videoUrl?: string; publishedAt?: string }> = []
 
         // 处理多P视频 / 用户主页批量下载
         if (data.isMultiPart && data.pages?.length) {
@@ -79,7 +88,8 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
                         if (actualVideoUrl) {
                             const result = await downloadWithType(actualVideoUrl, output, baseName + `-P${part}`, 'video', platform)
                             if (result.success) {
-                                files.push({ path: result.path, size: result.size, type: 'video' })
+                                const { dbId } = recordDownload(platform, username, baseName, videoUrl, result.path, '')
+                                files.push({ path: result.path, size: result.size, type: 'video', dbId, title: baseName, platform, videoUrl, publishedAt: '' })
                             }
                         }
                     } else {
@@ -115,6 +125,15 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
 
                                 if (actualVideoUrl) {
                                     const videoBaseName = sanitizeFilename(singleData.title || `${baseName}-P${page.page}`)
+                                    const videoPublishedAt = singleData.publishedAt || ''
+
+                                    // 检查是否已下载
+                                    const existed = checkDownloaded(actualVideoUrl, videoBaseName)
+                                    if (existed) {
+                                        console.log(`  [跳过] 已下载: ${existed.mediaPath}`)
+                                        files.push({ path: existed.mediaPath, size: 0, type: type === 'audio' ? 'audio' : 'video', dbId: existed.dbId, title: videoBaseName, platform, videoUrl, publishedAt: videoPublishedAt })
+                                        continue
+                                    }
 
                                     // 如果是音频模式，先下载视频再提取音频
                                     if (type === 'audio') {
@@ -127,7 +146,8 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
                                             // 提取音频
                                             const audioResult = await extractAudioFromVideo(videoResult.path, audioFile)
                                             if (audioResult.success) {
-                                                files.push({ path: audioResult.path, size: audioResult.size, type: 'audio' })
+                                                const { dbId } = recordDownload(platform, username, videoBaseName, videoUrl, audioResult.path, videoPublishedAt)
+                                                files.push({ path: audioResult.path, size: audioResult.size, type: 'audio', dbId, title: videoBaseName, platform, videoUrl, publishedAt: videoPublishedAt })
                                                 // 删除临时视频文件
                                                 const fs = await import('fs')
                                                 fs.unlinkSync(videoResult.path)
@@ -137,7 +157,8 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
                                         // 视频或自动模式，直接下载视频
                                         const result = await downloadWithType(actualVideoUrl, output, videoBaseName, 'video', platform)
                                         if (result.success) {
-                                            files.push({ path: result.path, size: result.size, type: 'video' })
+                                            const { dbId } = recordDownload(platform, username, videoBaseName, videoUrl, result.path, videoPublishedAt)
+                                            files.push({ path: result.path, size: result.size, type: 'video', dbId, title: videoBaseName, platform, videoUrl, publishedAt: videoPublishedAt })
                                         }
                                     }
                                 } else {
@@ -148,14 +169,20 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
                             }
                         } else {
                             // 直接下载
-                            if (type === 'audio') {
+                            const pageBaseName = baseName + `-P${page.page}`
+                            const existed = checkDownloaded(videoUrl, pageBaseName)
+                            if (existed) {
+                                console.log(`  [跳过] 已下载: ${existed.mediaPath}`)
+                                files.push({ path: existed.mediaPath, size: 0, type: type === 'audio' ? 'audio' : 'video', dbId: existed.dbId, title: pageBaseName, platform, videoUrl, publishedAt })
+                            } else if (type === 'audio') {
                                 const videoFile = join(output, baseName + `-P${page.page}_temp.mp4`)
                                 const audioFile = join(output, baseName + `-P${page.page}.mp3`)
                                 const videoResult = await downloadWithType(videoUrl, output, baseName + `-P${page.page}_temp`, 'video', platform)
                                 if (videoResult.success) {
                                     const audioResult = await extractAudioFromVideo(videoResult.path, audioFile)
                                     if (audioResult.success) {
-                                        files.push({ path: audioResult.path, size: audioResult.size, type: 'audio' })
+                                        const { dbId } = recordDownload(platform, username, baseName + `-P${page.page}`, videoUrl, audioResult.path, publishedAt)
+                                        files.push({ path: audioResult.path, size: audioResult.size, type: 'audio', dbId, title: baseName + `-P${page.page}`, platform, videoUrl, publishedAt })
                                         const fs = await import('fs')
                                         fs.unlinkSync(videoResult.path)
                                     }
@@ -163,7 +190,8 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
                             } else {
                                 const result = await downloadWithType(videoUrl, output, baseName + `-P${page.page}`, 'video', platform)
                                 if (result.success) {
-                                    files.push({ path: result.path, size: result.size, type: 'video' })
+                                    const { dbId } = recordDownload(platform, username, baseName + `-P${page.page}`, videoUrl, result.path, publishedAt)
+                                    files.push({ path: result.path, size: result.size, type: 'video', dbId, title: baseName + `-P${page.page}`, platform, videoUrl, publishedAt })
                                 }
                             }
                         }
@@ -193,9 +221,16 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
             if (type === 'video' || type === 'auto') {
                 const videoUrl = data.downloadVideoUrl || data.originDownloadVideoUrl
                 if (videoUrl) {
-                    const result = await downloadWithType(videoUrl, output, baseName, 'video', platform)
-                    if (result.success) {
-                        files.push({ path: result.path, size: result.size, type: 'video' })
+                    const existed = checkDownloaded(videoUrl, baseName)
+                    if (existed) {
+                        console.log(`\n[跳过] 该视频已下载: ${existed.mediaPath}`)
+                        files.push({ path: existed.mediaPath, size: 0, type: 'video', dbId: existed.dbId, title: baseName, platform, videoUrl, publishedAt })
+                    } else {
+                        const result = await downloadWithType(videoUrl, output, baseName, 'video', platform)
+                        if (result.success) {
+                            const { dbId } = recordDownload(platform, username, baseName, videoUrl, result.path, publishedAt)
+                            files.push({ path: result.path, size: result.size, type: 'video', dbId, title: baseName, platform, videoUrl, publishedAt })
+                        }
                     }
                 } else {
                     console.log(`[警告] 未找到视频下载链接`)
@@ -205,9 +240,16 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
             if (type === 'audio' || type === 'auto') {
                 const audioUrl = data.downloadAudioUrl || data.originDownloadAudioUrl
                 if (audioUrl) {
-                    const result = await downloadWithType(audioUrl, output, baseName, 'audio', platform)
-                    if (result.success) {
-                        files.push({ path: result.path, size: result.size, type: 'audio' })
+                    const existed = checkDownloaded(audioUrl, baseName)
+                    if (existed) {
+                        console.log(`\n[跳过] 该音频已下载: ${existed.mediaPath}`)
+                        files.push({ path: existed.mediaPath, size: 0, type: 'audio', dbId: existed.dbId, title: baseName, platform, videoUrl: audioUrl, publishedAt })
+                    } else {
+                        const result = await downloadWithType(audioUrl, output, baseName, 'audio', platform)
+                        if (result.success) {
+                            const { dbId } = recordDownload(platform, username, baseName, audioUrl, result.path, publishedAt)
+                            files.push({ path: result.path, size: result.size, type: 'audio', dbId, title: baseName, platform, videoUrl: audioUrl, publishedAt })
+                        }
                     }
                 } else {
                     console.log(`[提示] 音频需从视频中提取（暂未实现）`)
@@ -232,6 +274,55 @@ export async function downloadCommand(options: DownloadOptions): Promise<Downloa
             files: [],
             error: message,
         }
+    }
+}
+
+/**
+ * 检查是否已下载过（按视频 URL 或标题精确匹配）
+ */
+function checkDownloaded(videoUrl: string, title: string): { existed: boolean; dbId: number; mediaPath: string } | null {
+    let record = queryByVideoUrl(videoUrl)
+    if (!record && title) {
+        record = queryByTitleExact(title)
+    }
+    if (record && record.mediaPath) {
+        return { existed: true, dbId: record.id, mediaPath: record.mediaPath }
+    }
+    return null
+}
+
+/**
+ * 记录下载历史到 SQLite
+ */
+function recordDownload(
+    platform: string,
+    username: string,
+    title: string,
+    videoUrl: string,
+    filePath: string,
+    publishedAt: string,
+): { dbId: number; existed: boolean } {
+    // 先检查是否已下载
+    const existed = checkDownloaded(videoUrl, title)
+    if (existed) {
+        console.log(`  [跳过] 已下载过: ${existed.mediaPath}`)
+        return { dbId: existed.dbId, existed: true }
+    }
+
+    try {
+        const record = insertRecord({
+            platform,
+            username,
+            title,
+            videoUrl,
+            mediaPath: filePath,
+            transcriptText: '',
+            publishedAt,
+        })
+        console.log(`  [记录] 已保存到数据库 (ID: ${record.id})`)
+        return { dbId: record.id, existed: false }
+    } catch {
+        return { dbId: 0, existed: false }
     }
 }
 

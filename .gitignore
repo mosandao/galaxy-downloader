@@ -51,3 +51,6 @@ next-env.d.ts
 /dist/
 
 .vscode
+
+downloads/
+transcripts/

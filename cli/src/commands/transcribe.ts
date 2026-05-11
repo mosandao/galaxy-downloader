@@ -2,6 +2,7 @@ import { execSync, spawn } from 'child_process'
 import { join, dirname } from 'path'
 import { existsSync, readdirSync, statSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
+import { queryByTitle, updateTranscript } from '../db.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -248,6 +249,20 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<Tra
 
         if (result.success) {
             console.log(`  完成`)
+            // 更新数据库中的转录文本
+            try {
+                const baseNameMatch = baseName.replace(/\.[^.]+$/, '')
+                const records = queryByTitle(baseNameMatch)
+                if (records.length > 0) {
+                    const latestRecord = records[0]
+                    // 读取文本内容存入数据库
+                    const textContent = execSync(`cat "${existingFile}"`, { encoding: 'utf-8' }).trim()
+                    updateTranscript(latestRecord.id, textContent)
+                    console.log(`  [记录] 已更新数据库 (ID: ${latestRecord.id})`)
+                }
+            } catch {
+                // 数据库更新失败不影响转录结果
+            }
             results.push({ input: filePath, output: existingFile, text: result.text })
             successCount++
         } else {

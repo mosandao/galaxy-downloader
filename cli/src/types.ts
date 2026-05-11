@@ -72,6 +72,8 @@ export interface UnifiedParseResult {
         desc?: string;
         cover?: string | null;
         platform: string;
+        author?: string;
+        publishedAt?: string;
         downloadAudioUrl: string | null;
         downloadVideoUrl: string | null;
         originDownloadAudioUrl?: string | null;
