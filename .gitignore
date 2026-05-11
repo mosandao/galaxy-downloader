@@ -54,3 +54,5 @@ next-env.d.ts
 
 downloads/
 transcripts/
+.claude/
+.data/
