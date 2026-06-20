@@ -53,6 +53,8 @@ next-env.d.ts
 .vscode
 
 downloads/
-transcripts/
+transcript*
 .claude/
 .data/
+audio/
+clean_scripts/

@@ -115,7 +115,7 @@ function transcribeWithMlxAudio(
 
         const result = execSync(`python3 ${args.map(a => `"${a}"`).join(' ')}`, {
             encoding: 'utf-8',
-            timeout: 120000, // 2 分钟超时
+            timeout: 3600000, // 60 分钟超时
             stdio: ['pipe', 'pipe', 'pipe'],
         })
 
