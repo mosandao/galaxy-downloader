@@ -21,24 +21,22 @@ program
     .option('-t, --type <type>', '下载类型: video, audio, images, auto (默认: auto)', 'auto')
     .option('-o, --output <dir>', '输出目录 (默认: ./downloads)', './downloads')
     .option('-p, --part <num>', '多P视频指定分P下载')
+    .option('--folder <name>', '子文件夹名（按系列/用户分组）')
     .option('--browser', '使用浏览器模式（用于抖音用户主页批量下载）')
     .option('--json', '输出 JSON 格式结果')
     .option('--api-base <url>', '上游 API 地址')
     .action(async (url: string, options) => {
-        // 设置自定义 API 地址
-        if (options.apiBase) {
-            process.env.GALAXY_API_BASE_URL = options.apiBase
-        }
+        if (options.apiBase) process.env.GALAXY_API_BASE_URL = options.apiBase
+        if (options.browser) process.env.GALAXY_BROWSER_MODE = 'true'
 
-        // 设置浏览器模式
-        if (options.browser) {
-            process.env.GALAXY_BROWSER_MODE = 'true'
-        }
+        const output = options.folder
+            ? `${options.output}/${options.folder}`
+            : options.output
 
         const result = await downloadCommand({
             url,
             type: options.type as 'video' | 'audio' | 'images' | 'auto',
-            output: options.output,
+            output,
             part: options.part ? parseInt(options.part, 10) : undefined,
             browser: options.browser,
             json: options.json,
@@ -160,15 +158,20 @@ program
     .argument('<input>', '音频文件或目录路径')
     .description('将音频转录为文本（使用 Whisper 模型）')
     .option('--outdir <dir>', '输出目录 (默认: ./transcripts)', './transcripts')
+    .option('--folder <name>', '子文件夹名（按系列/用户分组）')
     .option('-m, --model <path>', 'Whisper 模型路径 (默认: ~/.omlx/models/whisper-large-v3-turbo)')
     .option('-l, --language <lang>', '语言代码: zh, en, ja, ko 等 (默认: zh)', 'zh')
     .option('-f, --format <format>', '输出格式: txt, srt, vtt, json (默认: txt)', 'txt')
     .option('--api <url>', '使用 API 服务转录（如 http://localhost:8000）')
     .option('--api-key <key>', 'API 服务密钥')
     .action(async (input: string, options: any) => {
+        const output = options.folder
+            ? `${options.outdir}/${options.folder}`
+            : options.outdir
+
         const result = await transcribeCommand({
             input,
-            output: options.outdir,
+            output,
             model: options.model,
             language: options.language,
             format: options.format as 'txt' | 'srt' | 'vtt' | 'json',
